@@ -1,0 +1,2784 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS Production Architecture Studio & Practice Hub | GitHub Enterprise Design</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="high-gloss-lacquer.css">
+  <script src="high-gloss-lacquer.js" defer></script>
+  <script src="cosmic-background.js" defer></script>
+  <script src="mcp-baseline.js" defer></script>
+  <style>
+    /* GitHub Primer + Enterprise Dark Theme Tokens (High-Gloss Lacquer Baseline) */
+    :root {
+      --gh-canvas-default: #050B18;
+      --gh-canvas-subtle: #0B162C;
+      --gh-canvas-inset: #020610;
+      --gh-panel-bg: rgba(11, 22, 44, 0.92);
+      --gh-card-bg: rgba(14, 29, 58, 0.85);
+      --gh-border-default: rgba(197, 160, 89, 0.28);
+      --gh-border-muted: rgba(197, 160, 89, 0.15);
+      --gh-border-subtle: rgba(255, 255, 255, 0.08);
+      --gh-text-primary: #FFFFFF;
+      --gh-text-secondary: #E2E8F0;
+      --gh-text-muted: #94A3B8;
+      --gh-accent-blue: #38BDF8;
+      --gh-accent-green: #34D399;
+      --gh-accent-purple: #A78BFA;
+      --gh-accent-red: #F87171;
+      --gh-accent-aws: #DFBA73;
+      --gh-accent-aws-hover: #C5A059;
+      --gh-accent-aws-glow: rgba(197, 160, 89, 0.35);
+      --sidebar-width: 280px;
+      --sidebar-collapsed-width: 64px;
+      --inspector-width: 420px;
+      --header-height: 52px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', SFMono-Regular, Consolas, monospace;
+      --transition-smooth: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      --shadow-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 24px -4px rgba(0, 0, 0, 0.75);
+    }
+
+    [data-theme="light"] {
+      --gh-canvas-default: #f6f8fa;
+      --gh-canvas-subtle: #ffffff;
+      --gh-canvas-inset: #eff2f5;
+      --gh-panel-bg: rgba(255, 255, 255, 0.92);
+      --gh-card-bg: #ffffff;
+      --gh-border-default: #d0d7de;
+      --gh-border-muted: #e1e4e8;
+      --gh-border-subtle: rgba(0, 0, 0, 0.06);
+      --gh-text-primary: #1f2328;
+      --gh-text-secondary: #656d76;
+      --gh-text-muted: #8c959f;
+      --gh-accent-blue: #0969da;
+      --gh-accent-green: #1a7f37;
+      --gh-accent-aws: #b86200;
+      --gh-accent-aws-hover: #d97706;
+      --shadow-bevel: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Full-Screen 100vw / 100vh Layout */
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: var(--font-sans);
+      background-color: var(--gh-canvas-default);
+      color: var(--gh-text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-root {
+      display: flex;
+      flex-direction: column;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Top Global Header (GitHub Style) */
+    .top-header {
+      height: var(--header-height);
+      min-height: var(--header-height);
+      background: var(--gh-canvas-subtle);
+      border-bottom: 1px solid var(--gh-border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .sidebar-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--gh-border-default);
+      color: var(--gh-text-secondary);
+      border-radius: 6px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+
+    .sidebar-toggle-btn:hover {
+      background: var(--gh-border-muted);
+      color: var(--gh-text-primary);
+      border-color: var(--gh-text-secondary);
+    }
+
+    .repo-breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.88rem;
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #f0883e 0%, #ff9900 100%);
+      color: #000;
+      font-weight: 900;
+      font-size: 0.78rem;
+      box-shadow: 0 2px 8px var(--gh-accent-aws-glow);
+    }
+
+    .crumb-org {
+      color: var(--gh-text-secondary);
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .crumb-sep {
+      color: var(--gh-text-muted);
+    }
+
+    .crumb-repo {
+      color: var(--gh-text-primary);
+      font-weight: 700;
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.15rem 0.55rem;
+      border-radius: 9999px;
+      background: rgba(63, 185, 80, 0.12);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+      color: var(--gh-accent-green);
+      font-family: var(--font-mono);
+    }
+
+    .badge-status::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gh-accent-green);
+      box-shadow: 0 0 8px var(--gh-accent-green);
+    }
+
+    /* Global Search & Command Bar */
+    .header-center {
+      flex: 1;
+      max-width: 520px;
+      margin: 0 1.5rem;
+    }
+
+    .command-search-box {
+      display: flex;
+      align-items: center;
+      background: var(--gh-canvas-inset);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 6px;
+      padding: 0.35rem 0.75rem;
+      gap: 0.5rem;
+      transition: var(--transition-smooth);
+    }
+
+    .command-search-box:focus-within {
+      border-color: var(--gh-accent-blue);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+    }
+
+    .command-search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--gh-text-primary);
+      font-size: 0.84rem;
+      font-family: inherit;
+      width: 100%;
+    }
+
+    .command-kbd {
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      color: var(--gh-text-muted);
+      background: var(--gh-border-muted);
+      border: 1px solid var(--gh-border-default);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .gh-btn-icon {
+      background: transparent;
+      border: 1px solid var(--gh-border-default);
+      color: var(--gh-text-secondary);
+      border-radius: 6px;
+      padding: 0.4rem 0.65rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: var(--transition-smooth);
+    }
+
+    .gh-btn-icon:hover {
+      background: var(--gh-border-muted);
+      color: var(--gh-text-primary);
+      border-color: var(--gh-text-secondary);
+    }
+
+    .gh-btn-primary {
+      background: #238636;
+      border: 1px solid rgba(240, 246, 252, 0.1);
+      color: #ffffff;
+      font-weight: 600;
+      border-radius: 6px;
+      padding: 0.4rem 0.85rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      text-decoration: none;
+      transition: var(--transition-smooth);
+    }
+
+    .gh-btn-primary:hover {
+      background: #2ea043;
+    }
+
+    /* Workspace Body: Left Sidebar + Center Viewport + Right Inspector */
+    .app-body {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - var(--header-height));
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* =========================================================================
+       LEFT NAVIGATION PANEL (GitHub Tree & Category Nav)
+       ========================================================================= */
+    .app-sidebar {
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      background: var(--gh-canvas-subtle);
+      border-right: 1px solid var(--gh-border-default);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 50;
+      user-select: none;
+    }
+
+    .app-sidebar.collapsed {
+      width: var(--sidebar-collapsed-width);
+      min-width: var(--sidebar-collapsed-width);
+    }
+
+    .app-sidebar.collapsed .sidebar-label,
+    .app-sidebar.collapsed .sidebar-sub,
+    .app-sidebar.collapsed .sidebar-header,
+    .app-sidebar.collapsed .sidebar-footer,
+    .app-sidebar.collapsed .stat-badge,
+    .app-sidebar.collapsed .nav-badge {
+      display: none !important;
+    }
+
+    .app-sidebar.collapsed .sidebar-item {
+      justify-content: center;
+      padding: 0.65rem 0;
+    }
+
+    .sidebar-section {
+      padding: 0.75rem 0.5rem;
+      border-bottom: 1px solid var(--gh-border-subtle);
+    }
+
+    .sidebar-header {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gh-text-muted);
+      padding: 0.35rem 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .sidebar-nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      color: var(--gh-text-secondary);
+      font-size: 0.84rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: var(--transition-smooth);
+      position: relative;
+    }
+
+    .sidebar-item:hover {
+      background: var(--gh-border-muted);
+      color: var(--gh-text-primary);
+    }
+
+    .sidebar-item.active {
+      background: rgba(88, 166, 255, 0.12);
+      color: var(--gh-accent-blue);
+      font-weight: 600;
+    }
+
+    .sidebar-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 4px;
+      bottom: 4px;
+      width: 3px;
+      border-radius: 0 4px 4px 0;
+      background: var(--gh-accent-blue);
+    }
+
+    .sidebar-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: inherit;
+    }
+
+    .sidebar-label {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-badge {
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      background: var(--gh-border-muted);
+      color: var(--gh-text-secondary);
+      padding: 0.1rem 0.45rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    /* Drill Readiness Tracker in Sidebar */
+    .sidebar-readiness-box {
+      background: var(--gh-canvas-inset);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin: 0.5rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .readiness-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--gh-text-primary);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: var(--gh-border-muted);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #f0883e, #3fb950);
+      transition: width 0.4s ease;
+    }
+
+    .readiness-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--gh-text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* Sidebar Footer */
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 0.75rem;
+      border-top: 1px solid var(--gh-border-default);
+      font-size: 0.74rem;
+      color: var(--gh-text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* =========================================================================
+       CENTER VIEWPORT (Scales 100% to fill any screen resolution)
+       ========================================================================= */
+    .app-main-viewport {
+      flex: 1;
+      height: 100%;
+      overflow-y: auto;
+      background: var(--gh-canvas-default);
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      position: relative;
+    }
+
+    /* View Panes */
+    .view-pane {
+      display: none;
+      width: 100%;
+      animation: paneFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .view-pane.active {
+      display: block;
+    }
+
+    @keyframes paneFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Professional Studio Header */
+    .studio-hero {
+      background: var(--gh-panel-bg);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 8px;
+      padding: 1.25rem 1.75rem;
+      box-shadow: var(--shadow-bevel);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem;
+      position: relative;
+    }
+
+    .hero-primary h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--gh-text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .hero-primary p {
+      font-size: 0.88rem;
+      color: var(--gh-text-secondary);
+      max-width: 860px;
+      margin-top: 0.25rem;
+    }
+
+    .hero-metric-strip {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      background: var(--gh-canvas-inset);
+      border: 1px solid var(--gh-border-default);
+      padding: 0.65rem 1.25rem;
+      border-radius: 6px;
+    }
+
+    .hero-stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-stat-num {
+      font-size: 1.25rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--gh-accent-aws);
+    }
+
+    .hero-stat-lbl {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gh-text-muted);
+    }
+
+    /* =========================================================================
+       CANVAS & TOPOLOGY TILES (Enterprise Data-Dense Styling)
+       ========================================================================= */
+    .topology-container {
+      background: var(--gh-panel-bg);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-bevel);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      position: relative;
+    }
+
+    .topology-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--gh-border-default);
+      padding-bottom: 0.85rem;
+    }
+
+    .layer-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .filter-chip {
+      background: var(--gh-canvas-inset);
+      border: 1px solid var(--gh-border-default);
+      color: var(--gh-text-secondary);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+
+    .filter-chip:hover {
+      border-color: var(--gh-text-secondary);
+      color: var(--gh-text-primary);
+    }
+
+    .filter-chip.active {
+      background: rgba(240, 136, 62, 0.15);
+      border-color: var(--gh-accent-aws);
+      color: var(--gh-accent-aws);
+      font-weight: 700;
+    }
+
+    /* Topology Tier Containers */
+    .tier-zone {
+      border: 1px solid var(--gh-border-muted);
+      background: rgba(1, 4, 9, 0.45);
+      border-radius: 8px;
+      padding: 1.25rem 1.25rem 1rem 1.25rem;
+      position: relative;
+      transition: var(--transition-smooth);
+    }
+
+    .tier-zone:hover {
+      border-color: var(--gh-border-default);
+    }
+
+    .tier-label-bar {
+      position: absolute;
+      top: -0.65rem;
+      left: 1rem;
+      background: var(--gh-canvas-subtle);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 4px;
+      padding: 0.1rem 0.6rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .tier-edge .tier-label-bar { color: #58a6ff; border-color: rgba(88, 166, 255, 0.4); }
+    .tier-ingress .tier-label-bar { color: #f0883e; border-color: rgba(240, 136, 62, 0.4); }
+    .tier-compute .tier-label-bar { color: #3fb950; border-color: rgba(63, 185, 80, 0.4); }
+    .tier-data .tier-label-bar { color: #bc8cff; border-color: rgba(188, 140, 255, 0.4); }
+    .tier-ai .tier-label-bar { color: #f778ba; border-color: rgba(247, 120, 186, 0.4); }
+    .tier-ops .tier-label-bar { color: #8b949e; border-color: var(--gh-border-default); }
+
+    .node-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.85rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Enterprise Cloud Node Card */
+    .cloud-node {
+      background: var(--gh-card-bg);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 6px;
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      transition: var(--transition-smooth);
+      position: relative;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .cloud-node:hover {
+      border-color: var(--gh-accent-aws);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 12px var(--gh-accent-aws-glow);
+    }
+
+    .cloud-node.selected {
+      border-color: var(--gh-accent-aws);
+      background: rgba(240, 136, 62, 0.08);
+      box-shadow: 0 0 0 2px var(--gh-accent-aws);
+    }
+
+    .cloud-node.pulse-glow {
+      animation: nodePulse 1.2s infinite alternate;
+    }
+
+    @keyframes nodePulse {
+      0% { border-color: var(--gh-accent-blue); box-shadow: 0 0 4px var(--gh-accent-blue); }
+      100% { border-color: #ffffff; box-shadow: 0 0 20px var(--gh-accent-blue); }
+    }
+
+    .node-icon-box {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      background: var(--gh-canvas-inset);
+      border: 1px solid var(--gh-border-default);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--gh-accent-aws);
+    }
+
+    .node-meta {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .node-name {
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: var(--gh-text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .node-sub {
+      font-size: 0.72rem;
+      color: var(--gh-text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .node-tag-pill {
+      position: absolute;
+      top: -0.35rem;
+      right: 0.5rem;
+      font-size: 0.62rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      padding: 0.08rem 0.4rem;
+      border-radius: 4px;
+      background: var(--gh-border-muted);
+      border: 1px solid var(--gh-border-default);
+      color: var(--gh-text-secondary);
+      text-transform: uppercase;
+    }
+
+    .flow-separator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--gh-accent-blue);
+      font-family: var(--font-mono);
+      margin: -0.5rem 0;
+      opacity: 0.8;
+    }
+
+    /* =========================================================================
+       INSPECTOR PANEL - CENTERED MODAL & DUAL-DOCKABLE MODES
+       ========================================================================= */
+    .app-inspector {
+      background: rgba(11, 22, 44, 0.96);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 1000;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Mode 1: Centered Focus Modal (Default) */
+    .app-inspector.mode-center {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 640px;
+      max-width: 92vw;
+      max-height: 85vh;
+      border: 1px solid var(--gh-accent-aws, #C5A059);
+      border-radius: 12px;
+      box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.95), 0 0 35px rgba(197, 160, 89, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+    }
+
+    /* Mode 2: Left Dock */
+    .app-inspector.mode-left {
+      position: relative;
+      order: -1;
+      width: var(--inspector-width);
+      min-width: var(--inspector-width);
+      border-right: 1px solid var(--gh-border-default);
+      border-left: none;
+      height: 100%;
+    }
+
+    /* Mode 3: Right Dock */
+    .app-inspector.mode-right {
+      position: relative;
+      order: 10;
+      width: var(--inspector-width);
+      min-width: var(--inspector-width);
+      border-left: 1px solid var(--gh-border-default);
+      border-right: none;
+      height: 100%;
+    }
+
+    .app-inspector.hidden {
+      display: none !important;
+    }
+
+    /* Backdrop scrim for centered modal */
+    .inspector-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 11, 24, 0.7);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 999;
+    }
+
+    .inspector-backdrop.active {
+      display: block;
+    }
+
+    /* Docking Mode Segment Buttons */
+    .dock-mode-bar {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(5, 11, 24, 0.85);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .dock-mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--gh-text-muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .dock-mode-btn:hover {
+      color: var(--gh-text-primary);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .dock-mode-btn.active {
+      background: var(--gh-accent-aws);
+      color: #050B18;
+      font-weight: 800;
+    }
+
+    .inspector-head {
+      padding: 1rem;
+      border-bottom: 1px solid var(--gh-border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .inspector-head-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .inspector-body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      font-size: 0.85rem;
+    }
+
+    .detail-card {
+      background: var(--gh-card-bg);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 6px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .detail-heading {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--gh-accent-aws);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .detail-text {
+      color: var(--gh-text-secondary);
+      line-height: 1.5;
+    }
+
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+
+    .param-table td {
+      padding: 0.35rem 0.25rem;
+      border-bottom: 1px solid var(--gh-border-subtle);
+    }
+
+    .param-table td:first-child {
+      color: var(--gh-text-muted);
+      font-weight: 600;
+      width: 42%;
+    }
+
+    .param-table td:last-child {
+      color: var(--gh-text-primary);
+      font-family: var(--font-mono);
+    }
+
+    /* =========================================================================
+       VIEW 2: ENTERPRISE REQUEST SIMULATOR
+       ========================================================================= */
+    .sim-split-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 1.25rem;
+      height: 100%;
+    }
+
+    @media (max-width: 900px) {
+      .sim-split-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sim-deck {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .sim-card-btn {
+      background: var(--gh-card-bg);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 6px;
+      padding: 1rem;
+      text-align: left;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .sim-card-btn:hover {
+      border-color: var(--gh-accent-blue);
+      background: var(--gh-border-muted);
+    }
+
+    .sim-card-btn.active {
+      border-color: var(--gh-accent-aws);
+      background: rgba(240, 136, 62, 0.1);
+      box-shadow: 0 0 0 1px var(--gh-accent-aws);
+    }
+
+    .sim-card-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--gh-text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sim-card-desc {
+      font-size: 0.78rem;
+      color: var(--gh-text-secondary);
+      line-height: 1.4;
+    }
+
+    .sim-console-terminal {
+      background: var(--gh-canvas-inset);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow-bevel);
+    }
+
+    .terminal-topbar {
+      background: var(--gh-canvas-subtle);
+      border-bottom: 1px solid var(--gh-border-default);
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--gh-text-secondary);
+    }
+
+    .terminal-body {
+      padding: 1rem;
+      overflow-y: auto;
+      max-height: 640px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .sim-step-row {
+      background: rgba(22, 27, 34, 0.6);
+      border: 1px solid var(--gh-border-default);
+      border-left: 3px solid var(--gh-accent-aws);
+      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      animation: paneFadeIn 0.25s ease;
+    }
+
+    .step-log-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+      color: var(--gh-accent-blue);
+    }
+
+    .step-log-desc {
+      font-family: var(--font-sans);
+      color: var(--gh-text-secondary);
+      font-size: 0.82rem;
+    }
+
+    .step-log-code {
+      background: #000;
+      border: 1px solid var(--gh-border-muted);
+      border-radius: 4px;
+      padding: 0.45rem 0.65rem;
+      color: #38bdf8;
+      font-size: 0.74rem;
+      overflow-x: auto;
+    }
+
+    /* =========================================================================
+       VIEW 3: SYSTEM DESIGN DRILL (31 QUESTIONS) - GITHUB ISSUE STYLING
+       ========================================================================= */
+    .drill-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .drill-filter-strip {
+      background: var(--gh-panel-bg);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .drill-module-card {
+      background: var(--gh-panel-bg);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 8px;
+      box-shadow: var(--shadow-bevel);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+
+    .module-header {
+      background: var(--gh-canvas-subtle);
+      border-bottom: 1px solid var(--gh-border-default);
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .module-badge {
+      background: var(--gh-accent-aws);
+      color: #000;
+      font-weight: 800;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      margin-right: 0.5rem;
+    }
+
+    .module-title-text {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--gh-text-primary);
+    }
+
+    .q-container {
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Single Question Item (GitHub Discussion / PR Review Style) */
+    .drill-q-row {
+      background: var(--gh-card-bg);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: var(--transition-smooth);
+    }
+
+    .drill-q-row.correct {
+      border-color: var(--gh-accent-green);
+      background: rgba(63, 185, 80, 0.05);
+    }
+
+    .drill-q-row.incorrect {
+      border-color: var(--gh-accent-red);
+      background: rgba(248, 81, 73, 0.05);
+    }
+
+    .drill-q-stem {
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: var(--gh-text-primary);
+    }
+
+    .blank-pill {
+      background: rgba(240, 136, 62, 0.15);
+      border: 1px dashed var(--gh-accent-aws);
+      color: var(--gh-accent-aws);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      padding: 0.1rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .drill-input-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .drill-input {
+      flex: 1;
+      min-width: 260px;
+      background: var(--gh-canvas-inset);
+      border: 1px solid var(--gh-border-default);
+      border-radius: 6px;
+      padding: 0.5rem 0.85rem;
+      color: var(--gh-text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      outline: none;
+      transition: var(--transition-smooth);
+    }
+
+    .drill-input:focus {
+      border-color: var(--gh-accent-blue);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+    }
+
+    .btn-gh {
+      border-radius: 6px;
+      padding: 0.5rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: var(--transition-smooth);
+      border: 1px solid var(--gh-border-default);
+      background: var(--gh-border-muted);
+      color: var(--gh-text-primary);
+    }
+
+    .btn-gh:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--gh-text-secondary);
+    }
+
+    .btn-gh-primary {
+      background: #238636;
+      border-color: rgba(240, 246, 252, 0.1);
+      color: #fff;
+    }
+
+    .btn-gh-primary:hover {
+      background: #2ea043;
+    }
+
+    .feedback-drawer {
+      display: none;
+      background: var(--gh-canvas-inset);
+      border: 1px solid var(--gh-border-muted);
+      border-radius: 6px;
+      padding: 0.85rem 1rem;
+      font-size: 0.84rem;
+      line-height: 1.5;
+    }
+
+    .feedback-drawer.show {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    /* Toast Notification */
+    .gh-toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--gh-canvas-subtle);
+      border: 1px solid var(--gh-border-default);
+      border-left: 4px solid var(--gh-accent-aws);
+      color: var(--gh-text-primary);
+      padding: 0.75rem 1.25rem;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      display: none;
+      animation: paneFadeIn 0.2s ease;
+    }
+  </style>
+
+  <!-- Antigravity Baseline Integration -->
+  <link rel="stylesheet" href="aws-enterprise-baseline.css">
+  <script src="aws-enterprise-baseline.js"></script>
+</head>
+<body>
+  <div class="app-root">
+
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="header-left">
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Navigation Sidebar">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z"/>
+          </svg>
+        </button>
+
+        <div class="repo-breadcrumbs">
+          <span class="brand-mark">AWS</span>
+          <span class="crumb-org">architecture-center</span>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-repo">full-production-system-design</span>
+        </div>
+
+        <span class="badge-status">Multi-AZ Resilient</span>
+      </div>
+
+      <div class="header-center">
+        <div class="command-search-box">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="color: var(--gh-text-muted);">
+            <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z"/>
+          </svg>
+          <input type="text" id="global-search-input" placeholder="Search AWS services, subnets, ports, or drill questions..." onkeyup="handleGlobalSearch(this.value)">
+          <span class="command-kbd">Ctrl+K</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button class="gh-btn-icon" onclick="toggleFullscreen()" title="Toggle Fullscreen Mode">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 1 0v-3.5h3.5a.5.5 0 0 0 0-1h-4zm13 0a.5.5 0 0 0-.5.5v3.5a.5.5 0 0 0 1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0 0 1h3.5zM1.5 15a.5.5 0 0 0 .5-.5v-3.5a.5.5 0 0 0-1 0v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 0-1h-3.5zm13 0a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 0-1 0v3.5h-3.5a.5.5 0 0 0 0 1h4z"/>
+          </svg>
+          <span>Fullscreen</span>
+        </button>
+
+        <a href="web-app/index.html" class="gh-btn-icon" title="Open Main Exam Hub">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Z"/>
+          </svg>
+          <span>Exam Hub</span>
+        </a>
+
+        <button class="gh-btn-primary" onclick="switchView('practice')">
+          <span>Practice Drill</span>
+          <span class="nav-badge" id="header-drill-badge">0/31</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Workspace Body -->
+    <div class="app-body">
+
+      <!-- =====================================================================
+           LEFT SIDEBAR NAVIGATION
+           ===================================================================== -->
+      <aside class="app-sidebar" id="app-sidebar">
+        
+        <!-- Views Section -->
+        <div class="sidebar-section">
+          <div class="sidebar-header">Core Perspectives</div>
+          <ul class="sidebar-nav-list">
+            <li>
+              <a class="sidebar-item active" data-view="explorer" onclick="switchView('explorer')">
+                <span class="sidebar-icon">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a3.5 3.5 0 0 0 4.95 0 .751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042 5.002 5.002 0 0 1-7.07 0 5 5 0 0 1 0-7.07l2.5-2.5a5 5 0 0 1 7.07 0 .752.752 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 3.5 3.5 0 0 0-4.95 0l-2.5 2.5a3.5 3.5 0 0 0 0 4.95Z"/>
+                  </svg>
+                </span>
+                <span class="sidebar-label">Architecture Studio</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar-item" data-view="simulator" onclick="switchView('simulator')">
+                <span class="sidebar-icon">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M1.75 1.5a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25H1.75ZM0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25V1.75Zm9.22 3.72a.75.75 0 0 0 0 1.06L10.94 8 9.22 9.72a.749.749 0 0 0 .326 1.275.749.749 0 0 0 .734-.215l2.25-2.25a.75.75 0 0 0 0-1.06l-2.25-2.25a.75.75 0 0 0-1.06 0ZM4.75 10.5h3.5a.75.75 0 0 0 0-1.5h-3.5a.75.75 0 0 0 0 1.5Z"/>
+                  </svg>
+                </span>
+                <span class="sidebar-label">Traffic Flow Simulator</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar-item" data-view="practice" onclick="switchView('practice')">
+                <span class="sidebar-icon">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/>
+                    <path d="M1.75 2.5h12.5a.25.25 0 0 1 .25.25v10.5a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25V2.75a.25.25 0 0 1 .25-.25ZM0 2.75C0 1.784.784 1 1.75 1h12.5C15.216 1 16 1.784 16 2.75v10.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25V2.75Z"/>
+                  </svg>
+                </span>
+                <span class="sidebar-label">System Design Drill</span>
+                <span class="nav-badge">31 Qs</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar-item" data-view="reference" onclick="switchView('reference')">
+                <span class="sidebar-icon">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a4.5 4.5 0 0 0-2.744.937.75.75 0 0 1-.998 0A4.5 4.5 0 0 0 4.257 13H.75a.75.75 0 0 1-.75-.75V1.75Z"/>
+                  </svg>
+                </span>
+                <span class="sidebar-label">Well-Architected Specs</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Architecture Tiers Jump Navigation -->
+        <div class="sidebar-section">
+          <div class="sidebar-header">Topology Tiers</div>
+          <ul class="sidebar-nav-list">
+            <li>
+              <a class="sidebar-item" onclick="filterLayers('edge'); scrollToTier('tier-edge')">
+                <span class="sidebar-icon" style="color: #58a6ff;">●</span>
+                <span class="sidebar-label">1. Edge & Perimeter</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar-item" onclick="filterLayers('public'); scrollToTier('tier-public')">
+                <span class="sidebar-icon" style="color: #f0883e;">●</span>
+                <span class="sidebar-label">2. Public Ingress & NAT</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar-item" onclick="filterLayers('private'); scrollToTier('tier-private')">
+                <span class="sidebar-icon" style="color: #3fb950;">●</span>
+                <span class="sidebar-label">3. Private Compute (ECS/Lambda)</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar-item" onclick="filterLayers('data'); scrollToTier('tier-data')">
+                <span class="sidebar-icon" style="color: #bc8cff;">●</span>
+                <span class="sidebar-label">4. Caching & Database</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar-item" onclick="filterLayers('ai'); scrollToTier('tier-ai')">
+                <span class="sidebar-icon" style="color: #f778ba;">●</span>
+                <span class="sidebar-label">5. Bedrock & AI Services</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar-item" onclick="filterLayers('ops'); scrollToTier('tier-ops')">
+                <span class="sidebar-icon" style="color: #8b949e;">●</span>
+                <span class="sidebar-label">6. Governance & DevOps</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Drill Readiness Box -->
+        <div class="sidebar-readiness-box">
+          <div class="readiness-header">
+            <span>Drill Readiness</span>
+            <span id="sidebar-pct-label" style="color: var(--gh-accent-aws); font-family: var(--font-mono);">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="sidebar-progress-fill"></div>
+          </div>
+          <div class="readiness-meta">
+            <span id="sidebar-solved-count">0 of 31 Solved</span>
+            <span id="sidebar-streak-count">0 Streak</span>
+          </div>
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+          <span>AWS Production Standard</span>
+          <span style="font-family: var(--font-mono); color: var(--gh-accent-green);">v1.4</span>
+        </div>
+      </aside>
+
+      <!-- =====================================================================
+           CENTER FLUID VIEWPORT
+           ===================================================================== -->
+      <main class="app-main-viewport" id="main-viewport">
+
+        <!-- VIEW 1: ARCHITECTURE STUDIO EXPLORER -->
+        <div id="view-explorer" class="view-pane active">
+          
+          <div class="studio-hero">
+            <div class="hero-primary">
+              <h1>
+                <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor" style="color: var(--gh-accent-aws);">
+                  <path d="M1.5 2.5h13a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Zm0 1v9h13v-9h-13Zm2 2h3v1.5h-3V5.5Zm0 3h5v1.5h-5V8.5Z"/>
+                </svg>
+                Full Production System Topology
+              </h1>
+              <p>
+                Engineered for 99.99% availability: Multi-AZ private VPC subnets, serverless ECS Fargate containers, decoupled SNS/SQS event buffers, multi-region Aurora clustering, and Amazon Bedrock GenAI orchestration.
+              </p>
+            </div>
+            <div class="hero-metric-strip">
+              <div class="hero-stat">
+                <span class="hero-stat-num">3</span>
+                <span class="hero-stat-lbl">Availability Zones</span>
+              </div>
+              <div class="hero-stat">
+                <span class="hero-stat-num">&lt; 25ms</span>
+                <span class="hero-stat-lbl">Target p95 Latency</span>
+              </div>
+              <div class="hero-stat">
+                <span class="hero-stat-num">99.99%</span>
+                <span class="hero-stat-lbl">Multi-AZ SLA</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="topology-container" style="margin-top: 1.5rem;">
+            
+            <div class="topology-toolbar">
+              <div class="layer-filter-bar">
+                <button class="filter-chip active" onclick="filterLayers('all', this)">All Layers</button>
+                <button class="filter-chip" onclick="filterLayers('edge', this)">1. Edge & DNS</button>
+                <button class="filter-chip" onclick="filterLayers('public', this)">2. Public Ingress</button>
+                <button class="filter-chip" onclick="filterLayers('private', this)">3. Private Compute</button>
+                <button class="filter-chip" onclick="filterLayers('data', this)">4. Data & Caching</button>
+                <button class="filter-chip" onclick="filterLayers('ai', this)">5. Bedrock & AI</button>
+                <button class="filter-chip" onclick="filterLayers('ops', this)">6. Observability</button>
+              </div>
+              <button class="gh-btn-icon" onclick="toggleInspector()" title="Toggle Right Details Panel">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M14.5 2h-13A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2Zm0 1.5v9h-4v-9h4Zm-5.5 0v9h-7.5v-9H9Z"/>
+                </svg>
+                <span>Inspector</span>
+              </button>
+            </div>
+
+            <!-- TIER 1: GLOBAL EDGE & SECURITY -->
+            <div class="tier-zone tier-edge" id="tier-edge" data-layer="edge">
+              <div class="tier-label-bar">Tier 1: Global Edge & Perimeter Defense</div>
+              <div class="node-grid">
+                
+                <div class="cloud-node" id="node-route53" onclick="inspectNode('route53')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon Route 53</span>
+                    <span class="node-sub">Global Anycast DNS</span>
+                  </div>
+                  <span class="node-tag-pill">Port 53</span>
+                </div>
+
+                <div class="cloud-node" id="node-cloudfront" onclick="inspectNode('cloudfront')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon CloudFront</span>
+                    <span class="node-sub">Global Edge CDN</span>
+                  </div>
+                  <span class="node-tag-pill">450+ PoPs</span>
+                </div>
+
+                <div class="cloud-node" id="node-waf" onclick="inspectNode('waf')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">AWS WAF & Shield</span>
+                    <span class="node-sub">Layer 7 DDoS & OWASP</span>
+                  </div>
+                  <span class="node-tag-pill">Rate Limit</span>
+                </div>
+
+                <div class="cloud-node" id="node-s3static" onclick="inspectNode('s3static')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">S3 Static Bucket</span>
+                    <span class="node-sub">SPA Frontend (OAC)</span>
+                  </div>
+                  <span class="node-tag-pill">11 9s</span>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="flow-separator">⬇️ Ingress traffic routed to VPC (10.0.0.0/16)</div>
+
+            <!-- TIER 2: PUBLIC SUBNETS -->
+            <div class="tier-zone tier-ingress" id="tier-public" data-layer="public">
+              <div class="tier-label-bar">Tier 2: Public Subnets (AZ-1 & AZ-2)</div>
+              <div class="node-grid">
+
+                <div class="cloud-node" id="node-alb" onclick="inspectNode('alb')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Application Load Balancer</span>
+                    <span class="node-sub">L7 Path Ingress</span>
+                  </div>
+                  <span class="node-tag-pill">Multi-AZ</span>
+                </div>
+
+                <div class="cloud-node" id="node-apigw" onclick="inspectNode('apigw')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon API Gateway</span>
+                    <span class="node-sub">Serverless REST / WS</span>
+                  </div>
+                  <span class="node-tag-pill">Throttling</span>
+                </div>
+
+                <div class="cloud-node" id="node-nat" onclick="inspectNode('nat')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Managed NAT Gateways</span>
+                    <span class="node-sub">Private Subnet Egress</span>
+                  </div>
+                  <span class="node-tag-pill">AZ Redundant</span>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="flow-separator">⬇️ Forward to Isolated Private Compute Subnets</div>
+
+            <!-- TIER 3: PRIVATE COMPUTE -->
+            <div class="tier-zone tier-compute" id="tier-private" data-layer="private">
+              <div class="tier-label-bar">Tier 3: Private Compute & Microservices</div>
+              <div class="node-grid">
+
+                <div class="cloud-node" id="node-ecs" onclick="inspectNode('ecs')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon ECS (Fargate)</span>
+                    <span class="node-sub">Serverless Containers</span>
+                  </div>
+                  <span class="node-tag-pill">Auto-Scale</span>
+                </div>
+
+                <div class="cloud-node" id="node-lambda" onclick="inspectNode('lambda')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">AWS Lambda</span>
+                    <span class="node-sub">Stateless Functions</span>
+                  </div>
+                  <span class="node-tag-pill">Event-Driven</span>
+                </div>
+
+                <div class="cloud-node" id="node-sns" onclick="inspectNode('sns')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon SNS</span>
+                    <span class="node-sub">Pub/Sub Fan-Out Topic</span>
+                  </div>
+                  <span class="node-tag-pill">1-to-Many</span>
+                </div>
+
+                <div class="cloud-node" id="node-sqs" onclick="inspectNode('sqs')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon SQS & DLQ</span>
+                    <span class="node-sub">Async Decoupling Buffer</span>
+                  </div>
+                  <span class="node-tag-pill">FIFO / Std</span>
+                </div>
+
+                <div class="cloud-node" id="node-workers" onclick="inspectNode('workers')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Async Worker Fleet</span>
+                    <span class="node-sub">Queue Consumer Cluster</span>
+                  </div>
+                  <span class="node-tag-pill">Batch Ops</span>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="flow-separator">⬇️ Persistence & In-Memory Operations</div>
+
+            <!-- TIER 4: DATA & STORAGE -->
+            <div class="tier-zone tier-data" id="tier-data" data-layer="data">
+              <div class="tier-label-bar">Tier 4: Isolated Database & Storage Layer</div>
+              <div class="node-grid">
+
+                <div class="cloud-node" id="node-elasticache" onclick="inspectNode('elasticache')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon ElastiCache</span>
+                    <span class="node-sub">Redis / Sub-ms Caching</span>
+                  </div>
+                  <span class="node-tag-pill">In-Memory</span>
+                </div>
+
+                <div class="cloud-node" id="node-aurora" onclick="inspectNode('aurora')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon Aurora Multi-AZ</span>
+                    <span class="node-sub">Writer + Read Replica</span>
+                  </div>
+                  <span class="node-tag-pill">Auto-Failover</span>
+                </div>
+
+                <div class="cloud-node" id="node-dynamo" onclick="inspectNode('dynamo')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon DynamoDB</span>
+                    <span class="node-sub">High-Scale NoSQL</span>
+                  </div>
+                  <span class="node-tag-pill">Single-ms</span>
+                </div>
+
+                <div class="cloud-node" id="node-s3app" onclick="inspectNode('s3app')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon S3 & Glacier</span>
+                    <span class="node-sub">Blobs / Durable Objects</span>
+                  </div>
+                  <span class="node-tag-pill">Lifecycle</span>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- TIER 5: AI SERVICES -->
+            <div class="tier-zone tier-ai" id="tier-ai" data-layer="ai">
+              <div class="tier-label-bar">Tier 5: Artificial Intelligence & Machine Learning</div>
+              <div class="node-grid">
+
+                <div class="cloud-node" id="node-bedrock" onclick="inspectNode('bedrock')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon Bedrock</span>
+                    <span class="node-sub">Managed GenAI LLM API</span>
+                  </div>
+                  <span class="node-tag-pill">Serverless</span>
+                </div>
+
+                <div class="cloud-node" id="node-sagemaker" onclick="inspectNode('sagemaker')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon SageMaker</span>
+                    <span class="node-sub">Real-Time ML Inferences</span>
+                  </div>
+                  <span class="node-tag-pill">GPU Nodes</span>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- TIER 6: GOVERNANCE & DEVOPS -->
+            <div class="tier-zone tier-ops" id="tier-ops" data-layer="ops">
+              <div class="tier-label-bar">Tier 6: Cross-Cutting Governance & DevOps</div>
+              <div class="node-grid">
+
+                <div class="cloud-node" id="node-cloudwatch" onclick="inspectNode('cloudwatch')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">Amazon CloudWatch</span>
+                    <span class="node-sub">Logs, Metrics & Alarms</span>
+                  </div>
+                  <span class="node-tag-pill">Telemetry</span>
+                </div>
+
+                <div class="cloud-node" id="node-xray" onclick="inspectNode('xray')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">AWS X-Ray</span>
+                    <span class="node-sub">Distributed Trace Spans</span>
+                  </div>
+                  <span class="node-tag-pill">p99 Latency</span>
+                </div>
+
+                <div class="cloud-node" id="node-kms" onclick="inspectNode('kms')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">KMS & Secrets Manager</span>
+                    <span class="node-sub">HSM Encryption & Secrets</span>
+                  </div>
+                  <span class="node-tag-pill">FIPS 140-3</span>
+                </div>
+
+                <div class="cloud-node" id="node-cicd" onclick="inspectNode('cicd')">
+                  <div class="node-icon-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  </div>
+                  <div class="node-meta">
+                    <span class="node-name">CodePipeline & ECR</span>
+                    <span class="node-sub">Blue/Green Deployments</span>
+                  </div>
+                  <span class="node-tag-pill">CI/CD</span>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- VIEW 2: TRAFFIC SIMULATOR -->
+        <div id="view-simulator" class="view-pane">
+          <div class="studio-hero">
+            <div class="hero-primary">
+              <h1>
+                <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor" style="color: var(--gh-accent-blue);">
+                  <path d="M1.75 1.5a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25H1.75ZM0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25V1.75Zm9.22 3.72a.75.75 0 0 0 0 1.06L10.94 8 9.22 9.72a.749.749 0 0 0 .326 1.275.749.749 0 0 0 .734-.215l2.25-2.25a.75.75 0 0 0 0-1.06l-2.25-2.25a.75.75 0 0 0-1.06 0ZM4.75 10.5h3.5a.75.75 0 0 0 0-1.5h-3.5a.75.75 0 0 0 0 1.5Z"/>
+                </svg>
+                Traffic Flow & Packet Journey Simulator
+              </h1>
+              <p>
+                Step through packet traces across tiers to understand exact network hops, HTTP headers, cache hit/miss behavior, and async message fan-outs.
+              </p>
+            </div>
+            <button class="gh-btn-primary" onclick="stepNextSimulation()">
+              <span>Run Next Hop Step</span>
+              <span>▶</span>
+            </button>
+          </div>
+
+          <div class="sim-split-layout" style="margin-top: 1.5rem;">
+            <div class="sim-deck">
+              <button class="sim-card-btn active" onclick="runSimulation('dynamic', this)">
+                <div class="sim-card-title">
+                  <span>1. Dynamic REST API</span>
+                  <span class="nav-badge" style="color: var(--gh-accent-aws);">GET</span>
+                </div>
+                <div class="sim-card-desc">
+                  Route 53 -> CloudFront -> WAF -> ALB -> ECS Fargate -> Redis Cache Miss -> Aurora Read Replica.
+                </div>
+              </button>
+
+              <button class="sim-card-btn" onclick="runSimulation('static', this)">
+                <div class="sim-card-title">
+                  <span>2. Static SPA Bundle</span>
+                  <span class="nav-badge" style="color: var(--gh-accent-blue);">CACHE</span>
+                </div>
+                <div class="sim-card-desc">
+                  CloudFront edge cache hit served in 6ms; private S3 fallback via Origin Access Control (OAC).
+                </div>
+              </button>
+
+              <button class="sim-card-btn" onclick="runSimulation('async', this)">
+                <div class="sim-card-title">
+                  <span>3. Async Order Fan-Out</span>
+                  <span class="nav-badge" style="color: var(--gh-accent-purple);">PUB/SUB</span>
+                </div>
+                <div class="sim-card-desc">
+                  Order saved PENDING in Aurora Writer -> SNS broadcasts to 3 SQS queues -> Worker Fleet processes jobs.
+                </div>
+              </button>
+
+              <button class="sim-card-btn" onclick="runSimulation('genai', this)">
+                <div class="sim-card-title">
+                  <span>4. GenAI (RAG) Query</span>
+                  <span class="nav-badge" style="color: #f778ba;">BEDROCK</span>
+                </div>
+                <div class="sim-card-desc">
+                  Aurora pgvector semantic lookup -> Context augmented to Amazon Bedrock Claude 3.5 Sonnet -> Streamed SSE tokens.
+                </div>
+              </button>
+
+              <button class="btn-gh" style="margin-top: 0.5rem; justify-content: center;" onclick="resetSimulation()">
+                <span>Reset Simulation</span>
+              </button>
+            </div>
+
+            <div class="sim-console-terminal">
+              <div class="terminal-topbar">
+                <span id="sim-active-scenario-title">SCENARIO: Dynamic REST API Request (GET /api/v1/feed)</span>
+                <span style="color: var(--gh-accent-green);">● Connected</span>
+              </div>
+              <div class="terminal-body" id="sim-steps-container">
+                <!-- Dynamically injected steps -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 3: PRACTICE DRILL (31 QUESTIONS) -->
+        <div id="view-practice" class="view-pane">
+          
+          <div class="studio-hero">
+            <div class="hero-primary">
+              <h1>
+                <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor" style="color: var(--gh-accent-green);">
+                  <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/>
+                  <path d="M1.75 2.5h12.5a.25.25 0 0 1 .25.25v10.5a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25V2.75a.25.25 0 0 1 .25-.25ZM0 2.75C0 1.784.784 1 1.75 1h12.5C15.216 1 16 1.784 16 2.75v10.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25V2.75Z"/>
+                </svg>
+                System Design Fill-in-the-Blank Drill
+              </h1>
+              <p>
+                Test your architectural recall: Complete all 31 challenge items spanning perimeter security, VPC subnets, container compute, decoupling, and high-availability persistence.
+              </p>
+            </div>
+
+            <div class="hero-metric-strip">
+              <div class="hero-stat">
+                <span class="hero-stat-num" id="drill-score-display">0 / 31</span>
+                <span class="hero-stat-lbl">Questions Solved</span>
+              </div>
+              <div class="hero-stat">
+                <span class="hero-stat-num" id="drill-accuracy-display" style="color: var(--gh-accent-green);">0%</span>
+                <span class="hero-stat-lbl">Accuracy</span>
+              </div>
+              <div class="hero-stat">
+                <span class="hero-stat-num" id="drill-streak-display">0 🔥</span>
+                <span class="hero-stat-lbl">Streak</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="drill-layout" style="margin-top: 1.5rem;">
+            
+            <div class="drill-filter-strip">
+              <div style="font-size: 0.85rem; font-weight: 700; color: var(--gh-text-secondary);">
+                <span>Module Navigator:</span>
+              </div>
+              <div class="layer-filter-bar">
+                <button class="filter-chip active" onclick="filterDrillModule('all', this)">All (31)</button>
+                <button class="filter-chip" onclick="filterDrillModule(1, this)">Part 1: Edge (4)</button>
+                <button class="filter-chip" onclick="filterDrillModule(2, this)">Part 2: Network (6)</button>
+                <button class="filter-chip" onclick="filterDrillModule(3, this)">Part 3: Compute (4)</button>
+                <button class="filter-chip" onclick="filterDrillModule(4, this)">Part 4: Decoupling (4)</button>
+                <button class="filter-chip" onclick="filterDrillModule(5, this)">Part 5: Data (6)</button>
+                <button class="filter-chip" onclick="filterDrillModule(6, this)">Part 6: AI/ML (2)</button>
+                <button class="filter-chip" onclick="filterDrillModule(7, this)">Part 7: Security (5)</button>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn-gh" onclick="fillAllCorrect()">Auto-Fill Solutions</button>
+                <button class="btn-gh" onclick="resetPractice()">Reset</button>
+              </div>
+            </div>
+
+            <!-- Questions Container -->
+            <div id="drill-questions-deck"></div>
+
+          </div>
+        </div>
+
+        <!-- VIEW 4: WELL-ARCHITECTED REFERENCE -->
+        <div id="view-reference" class="view-pane">
+          <div class="studio-hero">
+            <div class="hero-primary">
+              <h1>
+                <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor" style="color: var(--gh-accent-purple);">
+                  <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a4.5 4.5 0 0 0-2.744.937.75.75 0 0 1-.998 0A4.5 4.5 0 0 0 4.257 13H.75a.75.75 0 0 1-.75-.75V1.75Z"/>
+                </svg>
+                AWS Well-Architected Framework Alignment
+              </h1>
+              <p>
+                Comprehensive reference matrices for Multi-AZ disaster recovery, least-privilege IAM policies, and VPC subnet allocation standards.
+              </p>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1.25rem; margin-top: 1.5rem;">
+            
+            <div class="detail-card">
+              <div class="detail-heading">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Security Pillar (Zero-Trust VPC)
+              </div>
+              <div class="detail-text">
+                • <strong>Subnet Segregation</strong>: Databases reside strictly in isolated private subnets with no route table entry to Internet Gateways.<br>
+                • <strong>Egress Filtering</strong>: Compute instances reach external APIs through managed NAT Gateways with Elastic IPs.<br>
+                • <strong>AWS PrivateLink</strong>: Traffic to S3, DynamoDB, and Secrets Manager stays on the private AWS network backbone, bypassing NAT bandwidth costs.<br>
+                • <strong>KMS Envelope Encryption</strong>: Customer Managed Keys (CMKs) with annual automated key rotation encrypt all EBS volumes, RDS storage, and S3 buckets.
+              </div>
+            </div>
+
+            <div class="detail-card">
+              <div class="detail-heading">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+                Reliability Pillar (Multi-AZ Resilience)
+              </div>
+              <div class="detail-text">
+                • <strong>Aurora Multi-AZ</strong>: 6-way storage replication across 3 AZs. If the primary writer fails, an automated DNS failover promotes a read replica in under 30 seconds.<br>
+                • <strong>Auto Scaling Target Tracking</strong>: ECS Fargate services scale out when average CPU exceeds 65% or ALB request count surges.<br>
+                • <strong>Dead-Letter Queues (DLQ)</strong>: Poison pill messages are isolated after 3 processing retries to prevent blocking upstream worker queues.<br>
+                • <strong>Route 53 DNS Failover</strong>: Automated health checks trigger cross-region failover if the primary region's ALB becomes unreachable.
+              </div>
+            </div>
+
+            <div class="detail-card">
+              <div class="detail-heading">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                Performance Efficiency
+              </div>
+              <div class="detail-text">
+                • <strong>Sub-Millisecond In-Memory Caching</strong>: ElastiCache Redis cluster caches frequent database query results and user sessions.<br>
+                • <strong>CloudFront Edge Offloading</strong>: Caches static SPA assets and terminates TLS 1.3 at 450+ global Points of Presence.<br>
+                • <strong>Read Replicas</strong>: Read-heavy queries are directed to asynchronous read replicas to protect primary writer CPU.
+              </div>
+            </div>
+
+            <div class="detail-card">
+              <div class="detail-heading">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Cost Optimization
+              </div>
+              <div class="detail-text">
+                • <strong>S3 Lifecycle Policies</strong>: Transitions aging objects from Standard to Infrequent Access (IA) at 30 days and Glacier Flexible Archive at 90 days.<br>
+                • <strong>Fargate Serverless Compute</strong>: Eliminates idle EC2 instance overhead; billed strictly per second of vCPU and memory allocated.<br>
+                • <strong>VPC Gateway Endpoints</strong>: Provides free private routing to Amazon S3 and DynamoDB without incurring NAT data processing charges.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </main>
+
+      <!-- =====================================================================
+           INSPECTOR PANEL - CENTERED MODAL & DUAL-DOCKABLE MODES
+           ===================================================================== -->
+      <div class="inspector-backdrop" id="inspector-backdrop" onclick="toggleInspector()"></div>
+      <aside class="app-inspector mode-center hidden" id="app-inspector">
+        <div class="inspector-head">
+          <div class="inspector-head-title">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="color: var(--gh-accent-aws);">
+              <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Z"/>
+            </svg>
+            <span>Component Inspector</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div class="dock-mode-bar">
+              <button class="dock-mode-btn" id="dock-btn-left" onclick="setInspectorDock('left')" title="Dock Left">⇱ Left</button>
+              <button class="dock-mode-btn active" id="dock-btn-center" onclick="setInspectorDock('center')" title="Center Focus">⛶ Center</button>
+              <button class="dock-mode-btn" id="dock-btn-right" onclick="setInspectorDock('right')" title="Dock Right">⇲ Right</button>
+            </div>
+            <button class="gh-btn-icon" style="padding: 0.2rem 0.4rem;" onclick="toggleInspector()" title="Close Inspector">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div class="inspector-body">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="node-icon-box" id="insp-icon" style="width: 44px; height: 44px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            </div>
+            <div>
+              <div id="insp-title" style="font-size: 1.1rem; font-weight: 800; color: var(--gh-text-primary);">Amazon Route 53</div>
+              <div id="insp-category" style="font-size: 0.75rem; color: var(--gh-accent-blue); font-family: var(--font-mono);">Edge & DNS Routing</div>
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <div class="detail-heading">
+              <span>Production Role</span>
+            </div>
+            <div class="detail-text" id="insp-role">
+              Global Anycast DNS service that resolves domain names with sub-5ms resolution and steers users to closest healthy edge endpoints.
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <div class="detail-heading">
+              <span>Key Parameters</span>
+            </div>
+            <table class="param-table" id="insp-params">
+              <tr><td>Routing</td><td>Latency / Geolocation</td></tr>
+              <tr><td>SLA</td><td>100% Uptime Guarantee</td></tr>
+              <tr><td>Failover</td><td>Automated Multi-Region</td></tr>
+            </table>
+          </div>
+
+          <div class="detail-card">
+            <div class="detail-heading">
+              <span>Well-Architected Pillar</span>
+            </div>
+            <div class="detail-text" id="insp-pillar" style="color: var(--gh-accent-aws); font-weight: 600;">
+              Reliability & Performance Efficiency
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <div class="detail-heading">
+              <span>Failure Recovery Mode</span>
+            </div>
+            <div class="detail-text" id="insp-failover">
+              If the primary region degrades, Route 53 health checks detect failing heartbeats and automatically route DNS queries to the secondary DR region within 30 seconds.
+            </div>
+          </div>
+
+          <button class="btn-gh" onclick="readInspectorText()" style="width: 100%; justify-content: center; gap: 0.5rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            <span>Read Architecture Audio</span>
+          </button>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="gh-toast" id="gh-toast"></div>
+
+  <!-- Core JavaScript Data & Handlers -->
+  <script>
+    // Component Metadata
+    const NODE_METADATA = {
+      route53: {
+        title: "Amazon Route 53",
+        category: "Edge & DNS Routing",
+        role: "Global Anycast DNS service that resolves domain names with sub-5ms resolution and steers users to closest healthy edge endpoints.",
+        specs: [["Routing", "Latency / Geolocation"], ["SLA", "100% Uptime Guarantee"], ["Failover", "Automated Multi-Region DNS swing"]],
+        pillar: "Reliability & Performance Efficiency",
+        failover: "Detects dead health checks on primary origins and transparently fails over to standby regions in under 30 seconds."
+      },
+      cloudfront: {
+        title: "Amazon CloudFront",
+        category: "Content Delivery Network",
+        role: "Edge CDN terminating TLS 1.3, compressing assets (Brotli/Gzip), and serving cached static and dynamic content globally.",
+        specs: [["Edge Locations", "450+ Points of Presence"], ["Protocol", "HTTP/2, HTTP/3, TLS 1.3"], ["Origin Shield", "Centralized caching layer"]],
+        pillar: "Performance Efficiency & Cost Optimization",
+        failover: "Configured with Origin Groups: automatically fails over to backup origin if the primary responds with 500, 502, or 504 errors."
+      },
+      waf: {
+        title: "AWS WAF & Shield",
+        category: "Perimeter Security",
+        role: "Inspects Layer 7 HTTP requests against OWASP Top 10 vulnerabilities (SQL injection, XSS) and mitigates automated bot threats.",
+        specs: [["Inspection", "Full HTTP headers & body"], ["Rate Limit", "Configurable IP window limits"], ["DDoS", "Shield Standard (L3/L4) included"]],
+        pillar: "Security Pillar",
+        failover: "Runs natively on AWS edge nodes; rules update globally within 60 seconds with no latency degradation."
+      },
+      s3static: {
+        title: "S3 Static SPA Hosting",
+        category: "Object Storage Frontend",
+        role: "Hosts compiled React/Vue/Angular Single Page Application bundles securely with Origin Access Control (OAC).",
+        specs: [["Durability", "99.999999999% (11 9s)"], ["Access", "Private (CloudFront OAC only)"], ["Cost", "Fraction of a cent per GB"]],
+        pillar: "Cost Optimization & Security",
+        failover: "Protected by cross-region S3 replication (CRR) with versioning enabled against accidental deletion."
+      },
+      alb: {
+        title: "Application Load Balancer",
+        category: "Layer 7 Ingress",
+        role: "Distributes incoming HTTP/HTTPS traffic across ECS containers and EC2 instances across multiple Availability Zones.",
+        specs: [["Routing", "Path-based (/api/v1/*), host-based"], ["SSL/TLS", "Offloaded via ACM Certificates"], ["Health Checks", "HTTP periodic target ping"]],
+        pillar: "Reliability & Operational Excellence",
+        failover: "Automatically ceases routing traffic to failing targets within 10 seconds of health check failure."
+      },
+      apigw: {
+        title: "Amazon API Gateway",
+        category: "Serverless Ingress",
+        role: "Manages RESTful and WebSocket endpoints, enforcing API keys, throttling, request validation, and Lambda integration.",
+        specs: [["Type", "Regional / Edge-Optimized"], ["Throttling", "Token bucket rate limits"], ["Auth", "Cognito / IAM / Lambda Authorizers"]],
+        pillar: "Security & Scalability",
+        failover: "Fully managed AWS serverless proxy with native cross-AZ redundancy."
+      },
+      nat: {
+        title: "Managed NAT Gateways",
+        category: "VPC Egress Networking",
+        role: "Provides instances in private subnets with outbound internet access (package updates, external APIs) while blocking inbound connections.",
+        specs: [["Placement", "One per Availability Zone"], ["Bandwidth", "Scales automatically to 45 Gbps"], ["Elastic IP", "Static dedicated IP address"]],
+        pillar: "Security & Reliability",
+        failover: "Redundant NAT Gateways deployed in both AZ-1 and AZ-2 prevent cross-AZ failure dependency."
+      },
+      ecs: {
+        title: "Amazon ECS (Fargate)",
+        category: "Serverless Container Orchestration",
+        role: "Runs core microservice backend containers inside private subnets with auto-scaling and zero server maintenance.",
+        specs: [["Engine", "AWS Fargate (Serverless)"], ["Scaling", "Target Tracking (CPU > 65%)"], ["IAM", "Dedicated ECS Task Roles"]],
+        pillar: "Operational Excellence & Reliability",
+        failover: "ECS service scheduler automatically terminates and replaces unresponsive containers across AZs."
+      },
+      lambda: {
+        title: "AWS Lambda",
+        category: "Event-Driven Serverless Compute",
+        role: "Runs lightweight stateless functions triggered by API Gateway, S3 uploads, or SQS queue messages.",
+        specs: [["Concurrency", "Auto-scales to 1,000+ executions"], ["Billing", "Per millisecond execution"], ["Networking", "Hyperplane VPC ENI attachments"]],
+        pillar: "Cost Optimization & Performance",
+        failover: "Managed serverless runtime automatically retries asynchronous invocations twice before sending to DLQ."
+      },
+      sns: {
+        title: "Amazon SNS",
+        category: "Pub/Sub Messaging Decoupling",
+        role: "High-throughput publish/subscribe engine fanning out events (Order Created) to multiple SQS queues and microservices.",
+        specs: [["Pattern", "Fan-out 1-to-many"], ["Delivery", "Reliable push with filtering"], ["Encryption", "KMS envelope encryption"]],
+        pillar: "Reliability & Decoupled Architecture",
+        failover: "Messages stored redundantly across multiple AZs to prevent loss during network partitions."
+      },
+      sqs: {
+        title: "Amazon SQS & DLQ",
+        category: "Asynchronous Queue Buffer",
+        role: "Buffers spikes in workload so backend workers process jobs steadily, accompanied by a Dead-Letter Queue (DLQ).",
+        specs: [["Queue Type", "Standard / FIFO"], ["Retention", "Up to 14 days"], ["Visibility", "Configurable processing timeout"]],
+        pillar: "Reliability & Resiliency",
+        failover: "Unprocessable poison pill messages are routed to DLQ after 3 retries, protecting the pipeline."
+      },
+      workers: {
+        title: "Async Worker Fleet",
+        category: "Background Compute Fleet",
+        role: "Consumes messages from SQS to process heavy tasks: image resizing, payment capture, email dispatch, and report generation.",
+        specs: [["Scaling Metric", "Queue backlog depth"], ["Execution", "ECS Fargate tasks or Lambda"], ["Isolation", "Dedicated private subnet"]],
+        pillar: "Performance Efficiency & Cost Optimization",
+        failover: "Worker failures automatically release the SQS message lock, allowing peer workers to reprocess."
+      },
+      elasticache: {
+        title: "Amazon ElastiCache (Redis)",
+        category: "In-Memory Caching",
+        role: "Provides sub-millisecond data access for active session tokens, rate limits, and frequent database query results.",
+        specs: [["Engine", "Redis / Valkey Cluster Mode"], ["Replication", "Multi-AZ with auto-failover"], ["Latency", "Sub-millisecond responses"]],
+        pillar: "Performance Efficiency",
+        failover: "Standby replica is automatically promoted to primary master in under 15 seconds if master fails."
+      },
+      aurora: {
+        title: "Amazon Aurora Multi-AZ",
+        category: "Enterprise Relational Database",
+        role: "Primary ACID relational database (PostgreSQL/MySQL compatible) with dedicated read replicas in private database subnets.",
+        specs: [["Storage", "Distributed 6-way across 3 AZs"], ["Replicas", "Up to 15 auto-scaling Read Replicas"], ["Failover", "Automated in under 30 seconds"]],
+        pillar: "Reliability & Security",
+        failover: "If primary writer fails, Aurora promotes one of the read replicas to writer with zero data loss."
+      },
+      dynamo: {
+        title: "Amazon DynamoDB",
+        category: "Serverless NoSQL Database",
+        role: "Stores user activities, audit logs, and high-velocity key-value payloads with single-digit millisecond latency.",
+        specs: [["Scale", "Virtually unlimited throughput"], ["Features", "Global Tables, TTL auto-purge"], ["Consistency", "Eventual or Strong consistency"]],
+        pillar: "Performance Efficiency & Reliability",
+        failover: "Data is synchronously replicated across 3 facilities in the region automatically."
+      },
+      s3app: {
+        title: "Amazon S3 & Glacier",
+        category: "Durable Object Store",
+        role: "Stores user file uploads, invoice PDFs, system backups, and archives with automated lifecycle tiering.",
+        specs: [["Durability", "99.999999999% (11 9s)"], ["Lifecycle", "S3 Standard -> IA -> Glacier"], ["Security", "SSE-KMS Encryption at rest"]],
+        pillar: "Cost Optimization & Security",
+        failover: "Objects automatically distributed across a minimum of 3 Availability Zones."
+      },
+      bedrock: {
+        title: "Amazon Bedrock",
+        category: "Generative AI API",
+        role: "Provides serverless access to leading Foundation Models (Claude, Llama, Titan) for summarization, chat, and embeddings.",
+        specs: [["Architecture", "Fully managed serverless API"], ["Security", "Customer data never trains models"], ["RAG", "Native Knowledge Bases integration"]],
+        pillar: "Operational Excellence & Innovation",
+        failover: "AWS manages backend inference scaling across distributed GPU clusters without customer ops."
+      },
+      sagemaker: {
+        title: "Amazon SageMaker Endpoints",
+        category: "Custom Machine Learning",
+        role: "Hosts custom machine learning models on autoscaling GPU instances for real-time fraud scoring and recommendations.",
+        specs: [["Deployment", "Multi-model / Multi-container"], ["Scaling", "Auto-scales based on invokation rate"], ["Monitoring", "SageMaker Model Monitor drift alerts"]],
+        pillar: "Performance Efficiency",
+        failover: "Endpoints deployed across multiple AZs automatically re-route requests if an instance faults."
+      },
+      cloudwatch: {
+        title: "Amazon CloudWatch",
+        category: "Monitoring & Observability",
+        role: "Central repository for system metrics, container logs (via CloudWatch Container Insights), and threshold alarms.",
+        specs: [["Alarms", "Triggers Auto Scaling and SNS alerts"], ["Logs", "Encrypted central log groups"], ["Dashboards", "Single-pane-of-glass operations"]],
+        pillar: "Operational Excellence",
+        failover: "Regional managed service operating independently of VPC availability."
+      },
+      xray: {
+        title: "AWS X-Ray",
+        category: "Distributed Tracing",
+        role: "Traces end-to-end user requests as they traverse API Gateway, ECS, Lambda, and databases to spot bottlenecks.",
+        specs: [["Map", "Dynamic service dependency graph"], ["Latency", "Percentile analysis (p95, p99)"], ["Sampling", "Adaptive rate-based sampling"]],
+        pillar: "Operational Excellence",
+        failover: "Collects traces via local daemon or OpenTelemetry collector asynchronously."
+      },
+      kms: {
+        title: "AWS KMS & Secrets Manager",
+        category: "Security & Encryption",
+        role: "Manages Hardware Security Module (HSM) encryption keys and automatically rotates database credentials.",
+        specs: [["FIPS", "FIPS 140-3 Level 3 compliance"], ["Rotation", "Automated Lambda-driven credential drift"], ["Audit", "Every key access logged in CloudTrail"]],
+        pillar: "Security Pillar",
+        failover: "Multi-region KMS keys support cross-region disaster recovery setups."
+      },
+      cicd: {
+        title: "AWS CodePipeline & ECR",
+        category: "DevOps & CI/CD",
+        role: "Automates linting, testing, Docker image building, scanning, and rolling blue/green deployments to ECS/EKS.",
+        specs: [["Artifacts", "Encrypted in S3 with KMS"], ["Registry", "Amazon ECR with vulnerability scanning"], ["Deployment", "Canary & Blue/Green zero-downtime"]],
+        pillar: "Operational Excellence",
+        failover: "Failed automated integration tests immediately abort rollout, leaving existing stable tasks intact."
+      }
+    };
+
+    // Practice Questions Database (All 31 items)
+    const PRACTICE_QUESTIONS = [
+      { id: 1, module: 1, moduleName: "Edge, DNS & Perimeter Security", stem: "To distribute user traffic with latency-based routing, health check failover, and manage DNS records, we configure [ 1 ].", answers: ["route 53", "amazon route 53", "aws route 53", "route53"], hint: "AWS's highly available 100% SLA Domain Name System named after port 53.", rationale: "Amazon Route 53 is AWS's authoritative DNS resolver providing latency routing, geolocation routing, and automatic DNS failover via health checks." },
+      { id: 2, module: 1, moduleName: "Edge, DNS & Perimeter Security", stem: "To cache dynamic and static content at hundreds of global Points of Presence, we place [ 2 ] in front of our infrastructure.", answers: ["cloudfront", "amazon cloudfront", "aws cloudfront"], hint: "AWS's global Content Delivery Network (CDN) with 450+ Points of Presence.", rationale: "Amazon CloudFront speeds up distribution of web content by caching assets close to viewers, terminating TLS connections at the edge." },
+      { id: 3, module: 1, moduleName: "Edge, DNS & Perimeter Security", stem: "To inspect incoming HTTP requests at the edge and prevent SQL injection, cross-site scripting (XSS), and bad bot traffic, we deploy [ 3 ].", answers: ["aws waf", "waf", "web application firewall"], hint: "Layer 7 security service that blocks malicious web exploits.", rationale: "AWS WAF monitors HTTP/HTTPS requests forwarded to CloudFront or an Application Load Balancer and filters malicious traffic using managed rule sets." },
+      { id: 4, module: 1, moduleName: "Edge, DNS & Perimeter Security", stem: "To secure data in transit with zero-maintenance, automatically renewing SSL/TLS certificates, we attach certificates from [ 4 ].", answers: ["acm", "aws certificate manager", "certificate manager"], hint: "AWS service providing free, auto-renewing SSL/TLS certificates.", rationale: "AWS Certificate Manager (ACM) handles the complexity of provisioning, deploying, and renewing public SSL/TLS certificates for CloudFront and ALBs." },
+      { id: 5, module: 2, moduleName: "Network Topology & Isolation", stem: "All cloud resources are deployed inside an isolated virtual network known as an [ 5 ].", answers: ["vpc", "amazon vpc", "virtual private cloud", "aws vpc"], hint: "The fundamental software-defined private network in AWS.", rationale: "Amazon VPC lets you provision a logically isolated section of the AWS Cloud where you launch resources in a virtual network you define." },
+      { id: 6, module: 2, moduleName: "Network Topology & Isolation", stem: "Internet-facing components like load balancers reside in [ 6 ] subnets that route directly to an Internet Gateway.", answers: ["public", "public subnet", "public subnets"], hint: "Opposite of private subnets; has a direct 0.0.0.0/0 route to an IGW.", rationale: "Public subnets have a route table entry pointing to an Internet Gateway, allowing direct two-way internet ingress and egress." },
+      { id: 7, module: 2, moduleName: "Network Topology & Isolation", stem: "A horizontally scaled, redundant VPC component that enables direct internet communication for public subnets is an [ 7 ].", answers: ["internet gateway", "igw", "an internet gateway"], hint: "VPC component abbreviated IGW.", rationale: "An Internet Gateway (IGW) is a redundant, highly available VPC component that enables communication between instances in public subnets and the internet." },
+      { id: 8, module: 2, moduleName: "Network Topology & Isolation", stem: "Backend application servers, microservices, and databases reside in [ 8 ] subnets with no direct route to the Internet Gateway.", answers: ["private", "private subnet", "private subnets"], hint: "Subnets isolated from unsolicited inbound internet traffic.", rationale: "Private subnets lack a route to an Internet Gateway. Only internal VPC components and load balancers can reach them." },
+      { id: 9, module: 2, moduleName: "Network Topology & Isolation", stem: "When backend services in private subnets need outbound internet access to download patches without accepting inbound connections, they route through a [ 9 ].", answers: ["nat gateway", "nat", "managed nat gateway", "aws nat gateway"], hint: "Network Address Translation service located in public subnets.", rationale: "A NAT Gateway allows instances in private subnets to connect to services outside your VPC but prevents external services from initiating unauthorized inbound connections." },
+      { id: 10, module: 2, moduleName: "Network Topology & Isolation", stem: "To communicate securely with AWS internal services (such as S3 and DynamoDB) without routing traffic through public NAT gateways, we create [ 10 ].", answers: ["vpc endpoints", "vpc endpoint", "privatelink", "aws privatelink", "gateway endpoint", "gateway endpoints"], hint: "Private virtual connections powered by AWS PrivateLink.", rationale: "VPC Endpoints (PrivateLink & Gateway Endpoints) keep internal traffic to services like S3 and DynamoDB on the private AWS network backbone, reducing latency and avoiding NAT bandwidth fees." },
+      { id: 11, module: 3, moduleName: "Compute & Ingress Orchestration", stem: "To distribute Layer 7 HTTP/HTTPS traffic across containers running across multiple Availability Zones, we configure an [ 11 ].", answers: ["alb", "application load balancer", "aws alb", "an alb"], hint: "Layer 7 Load Balancer supporting path-based routing.", rationale: "Application Load Balancer (ALB) operates at the application layer (Layer 7) and provides advanced routing, TLS termination, and health check-based load distribution." },
+      { id: 12, module: 3, moduleName: "Compute & Ingress Orchestration", stem: "To run containerized microservices without having to provision, configure, or patch underlying EC2 virtual servers, we run ECS or EKS workloads on [ 12 ].", answers: ["fargate", "aws fargate", "fargate serverless"], hint: "Serverless compute engine for containers.", rationale: "AWS Fargate is a serverless compute engine for containers that works with Amazon ECS and EKS, eliminating the need to manage host EC2 instances." },
+      { id: 13, module: 3, moduleName: "Compute & Ingress Orchestration", stem: "To execute lightweight, stateless backend tasks and event listeners that scale strictly on demand from zero to thousands of executions, we use [ 13 ].", answers: ["lambda", "aws lambda"], hint: "AWS serverless functions billed by millisecond execution.", rationale: "AWS Lambda lets you run code without provisioning or managing servers, scaling automatically in response to HTTP requests, queue messages, or database changes." },
+      { id: 14, module: 3, moduleName: "Compute & Ingress Orchestration", stem: "If using standard virtual machines, we ensure elastic scaling and self-healing by grouping EC2 instances into an [ 14 ].", answers: ["auto scaling group", "asg", "ec2 auto scaling group", "an auto scaling group"], hint: "Abbreviated ASG; maintains healthy instance capacity.", rationale: "An Auto Scaling Group (ASG) monitors your EC2 instances and automatically adjusts capacity to maintain steady, predictable performance at lowest cost." },
+      { id: 15, module: 4, moduleName: "Decoupling & Asynchronous Message Flow", stem: "When an event occurs and we need to simultaneously notify payment, inventory, and analytics services, we use a [ 15 ] pattern.", answers: ["fan-out", "fan out", "pub/sub", "pub sub", "publish/subscribe", "publish subscribe"], hint: "1-to-many messaging architecture pattern.", rationale: "The Publish/Subscribe Fan-Out pattern broadcasts a single event to multiple downstream subscriber queues without coupling the services together." },
+      { id: 16, module: 4, moduleName: "Decoupling & Asynchronous Message Flow", stem: "The AWS pub/sub messaging engine capable of broadcasting events to multiple SQS queues or HTTP endpoints is [ 16 ].", answers: ["sns", "amazon sns", "aws sns", "simple notification service"], hint: "Simple Notification Service.", rationale: "Amazon SNS is a fully managed pub/sub messaging service for both application-to-application (A2A) and application-to-person (A2P) communication." },
+      { id: 17, module: 4, moduleName: "Decoupling & Asynchronous Message Flow", stem: "To buffer incoming background jobs and prevent backend workers from being overwhelmed during traffic spikes, we queue requests inside [ 17 ].", answers: ["sqs", "amazon sqs", "aws sqs", "simple queue service"], hint: "AWS message queue service guaranteeing delivery.", rationale: "Amazon SQS is a distributed message queuing service that decouples microservices and smooths out traffic bursts by buffering messages." },
+      { id: 18, module: 4, moduleName: "Decoupling & Asynchronous Message Flow", stem: "Messages that continuously fail processing after a set number of retries are shunted to a [ 18 ] to prevent blocking the queue.", answers: ["dead-letter queue", "dead letter queue", "dlq", "a dead-letter queue", "a dlq"], hint: "Queue that isolates poison pill messages (abbreviated DLQ).", rationale: "A Dead-Letter Queue (DLQ) captures failed messages that exceed the maximum receive count, allowing developers to inspect erroneous payloads without halting queue processing." },
+      { id: 19, module: 5, moduleName: "Data, Caching & High Availability", stem: "To decrease database read latency to sub-millisecond speeds, we cache session state and hot queries inside [ 19 ].", answers: ["elasticache", "amazon elasticache", "elasticache redis", "redis"], hint: "In-memory caching service supporting Redis and Memcached.", rationale: "Amazon ElastiCache provides sub-millisecond response times for data-intensive apps by caching relational query results and managing session states in-memory." },
+      { id: 20, module: 5, moduleName: "Data, Caching & High Availability", stem: "For our core relational database, we deploy Amazon RDS or Aurora with [ 20 ] enabled to ensure automatic failover in under 30 seconds if a data center fails.", answers: ["multi-az", "multi az", "multi-az deployment"], hint: "High availability database feature across Availability Zones.", rationale: "Multi-AZ deployments maintain a synchronous standby replica in a different physical Availability Zone, providing automatic failover with zero data loss." },
+      { id: 21, module: 5, moduleName: "Data, Caching & High Availability", stem: "To scale relational database read throughput across multiple Availability Zones without adding load to the primary writer, we provision [ 21 ].", answers: ["read replicas", "read replica", "aurora read replicas"], hint: "Asynchronous read-only copies of the database.", rationale: "Read Replicas process read-heavy queries asynchronously, freeing up the primary writer instance for transactional writes." },
+      { id: 22, module: 5, moduleName: "Data, Caching & High Availability", stem: "For schemaless, high-scale key-value data models requiring consistent single-digit millisecond latency, we select [ 22 ].", answers: ["dynamodb", "amazon dynamodb", "aws dynamodb"], hint: "Fully managed serverless NoSQL database.", rationale: "Amazon DynamoDB is a key-value and document database that delivers single-digit millisecond performance at any scale with built-in security and automated backups." },
+      { id: 23, module: 5, moduleName: "Data, Caching & High Availability", stem: "High-durability storage of user images, documents, and system backups is stored on [ 23 ].", answers: ["s3", "amazon s3", "aws s3", "simple storage service"], hint: "AWS object store offering 11 9's durability.", rationale: "Amazon S3 provides 99.999999999% (11 9s) of data durability, infinite scale, and fine-grained IAM access controls for unstructured objects." },
+      { id: 24, module: 5, moduleName: "Data, Caching & High Availability", stem: "To minimize long-term storage costs, aging objects in S3 are transitioned via Lifecycle rules to [ 24 ].", answers: ["glacier", "s3 glacier", "amazon s3 glacier", "s3 glacier flexible archive"], hint: "Ultra-low-cost cold storage tier for compliance archives.", rationale: "Amazon S3 Glacier provides secure, durable, and extremely low-cost storage classes for data archiving and long-term backup." },
+      { id: 25, module: 6, moduleName: "AI & Machine Learning Services", stem: "To integrate large language models (LLMs) such as Claude or Llama through an enterprise-grade managed API without managing GPU infrastructure, we call [ 25 ].", answers: ["bedrock", "amazon bedrock", "aws bedrock"], hint: "AWS's premier serverless Foundation Model API service.", rationale: "Amazon Bedrock is a fully managed service that offers a choice of high-performing foundation models from leading AI companies via a single API." },
+      { id: 26, module: 6, moduleName: "AI & Machine Learning Services", stem: "To deploy, train, and host custom proprietary deep learning models with dedicated autoscaling GPU inference endpoints, we deploy on [ 26 ].", answers: ["sagemaker", "amazon sagemaker", "aws sagemaker"], hint: "AWS's flagship machine learning platform for custom models.", rationale: "Amazon SageMaker provides comprehensive tools to build, train, tune, and deploy custom machine learning models with real-time inference endpoints." },
+      { id: 27, module: 7, moduleName: "Security, Observability & DevOps", stem: "Application secrets, database passwords, and API keys are stored and automatically rotated using [ 27 ].", answers: ["secrets manager", "aws secrets manager"], hint: "Service dedicated to secret lifecycle and rotation.", rationale: "AWS Secrets Manager protects secrets needed to access your applications, services, and IT resources, and enables automated password rotation without code redeploys." },
+      { id: 28, module: 7, moduleName: "Security, Observability & DevOps", stem: "Cryptographic keys used to encrypt data at rest across S3, RDS, and EBS volumes are managed through [ 28 ].", answers: ["kms", "aws kms", "key management service"], hint: "Key Management Service backed by FIPS HSMs.", rationale: "AWS KMS allows you to create and control cryptographic keys used to encrypt your data across 100+ AWS services with complete CloudTrail auditability." },
+      { id: 29, module: 7, moduleName: "Security, Observability & DevOps", stem: "Centralized metrics, log aggregation, and real-time threshold alarms are handled by [ 29 ].", answers: ["cloudwatch", "amazon cloudwatch", "aws cloudwatch"], hint: "Primary AWS monitoring and observability suite.", rationale: "Amazon CloudWatch collects monitoring and operational data in the form of logs, metrics, and events, powering automated alarms and autoscaling policies." },
+      { id: 30, module: 7, moduleName: "Security, Observability & DevOps", stem: "To analyze latency bottlenecks and visualize the request path across microservice boundaries, we enable [ 30 ].", answers: ["x-ray", "aws x-ray", "xray", "aws xray"], hint: "Distributed tracing service for microservice debugging.", rationale: "AWS X-Ray helps developers analyze and debug distributed applications, such as those built using a microservices architecture, generating detailed service maps." },
+      { id: 31, module: 7, moduleName: "Security, Observability & DevOps", stem: "Docker container images built by our CI/CD pipeline are securely stored and scanned in the managed container registry [ 31 ].", answers: ["ecr", "amazon ecr", "elastic container registry", "aws ecr"], hint: "Elastic Container Registry.", rationale: "Amazon Elastic Container Registry (ECR) is a fully managed container registry that makes it easy to store, manage, share, and deploy container images securely." }
+    ];
+
+    // Simulation Scenarios
+    const SIM_SCENARIOS = {
+      dynamic: {
+        title: "SCENARIO: Dynamic REST API Request (GET /api/v1/feed)",
+        steps: [
+          { hop: "Hop 1: DNS Lookup", service: "Amazon Route 53", nodeId: "node-route53", details: "Client resolves api.company.com. Route 53 evaluates Anycast latency and returns closest CloudFront edge IP.", payload: "DNS ANSWER: api.company.com -> 13.225.103.54 (TTL 60s)" },
+          { hop: "Hop 2: Edge WAF", service: "CloudFront + AWS WAF", nodeId: "node-cloudfront", details: "TLS 1.3 handshake terminated at Edge. AWS WAF evaluates HTTP headers against SQLi and rate-limits.", payload: "HTTP/2 GET /api/v1/feed [WAF: ALLOWED | LATENCY: 4ms]" },
+          { hop: "Hop 3: L7 Ingress", service: "Application Load Balancer (ALB)", nodeId: "node-alb", details: "ALB evaluates path /api/v1/*, matches Feed Service Target Group, routes to container in Private Subnet AZ-1.", payload: "ROUTE: alb-ingress -> 10.0.10.45:8080 (ECS Target)" },
+          { hop: "Hop 4: Compute", service: "Amazon ECS (Fargate)", nodeId: "node-ecs", details: "Microservice authenticates JWT, inspects request context, and queries in-memory ElastiCache cluster.", payload: "QUERY: redis.get('feed:u9821')" },
+          { hop: "Hop 5: Cache Check", service: "Amazon ElastiCache (Redis)", nodeId: "node-elasticache", details: "Redis checks key. Result is NIL (Cache Miss). Control shifts back to container to query database.", payload: "REDIS RESPONSE: (nil) [LATENCY: 0.8ms]" },
+          { hop: "Hop 6: Database Read", service: "Aurora Read Replica", nodeId: "node-aurora", details: "Container queries PostgreSQL Read Replica in AZ-2, preventing CPU overhead on primary writer.", payload: "SQL: SELECT * FROM feed_items WHERE user_id = 9821 ORDER BY ts DESC LIMIT 20;" },
+          { hop: "Hop 7: Write-Back", service: "ECS -> Redis -> Client", nodeId: "node-ecs", details: "Container writes back to Redis (TTL 300s) and returns 200 OK JSON payload back through ALB to user.", payload: "HTTP 200 OK [Content-Type: application/json, Total: 28ms]" }
+        ]
+      },
+      static: {
+        title: "SCENARIO: Static SPA Bundle Fetch (GET /main.f83a.js)",
+        steps: [
+          { hop: "Hop 1: Edge DNS", service: "Amazon Route 53", nodeId: "node-route53", details: "Browser requests app.company.com. Route 53 returns edge Point of Presence IP.", payload: "DNS ANSWER: app.company.com -> 13.224.2.10" },
+          { hop: "Hop 2: Cache Hit", service: "Amazon CloudFront Edge", nodeId: "node-cloudfront", details: "CloudFront PoP checks local SSD edge cache for JS bundle. Cache Hit! Returns compressed Brotli bundle in 6ms.", payload: "HTTP 200 OK [X-Cache: Hit from cloudfront, Size: 142KB, Latency: 6ms]" },
+          { hop: "Hop 3: Origin Fallback", service: "Amazon S3 (SPA Bucket)", nodeId: "node-s3static", details: "On cache miss, CloudFront signs request with Origin Access Control (OAC), fetching privately from S3.", payload: "S3:GetObject app-static-production-spa/main.f83a.js [SSE-KMS]" }
+        ]
+      },
+      async: {
+        title: "SCENARIO: Asynchronous Order Fan-Out (POST /api/v1/orders)",
+        steps: [
+          { hop: "Hop 1: Ingest", service: "ALB -> ECS Order Service", nodeId: "node-ecs", details: "User completes checkout. Order saved PENDING in Aurora Writer in AZ-1.", payload: "SQL: INSERT INTO orders (id, total, status) VALUES ('ord-771', 129.99, 'PENDING');" },
+          { hop: "Hop 2: Broadcast", service: "Amazon SNS Topic", nodeId: "node-sns", details: "ECS publishes OrderPlaced event to SNS topic production-orders-fanout.", payload: "SNS:Publish { orderId: 'ord-771', amount: 129.99, items: 3 }" },
+          { hop: "Hop 3: Fan-Out", service: "Amazon SQS Queues", nodeId: "node-sqs", details: "SNS fans out message to 3 decoupled queues: Payment Queue, Inventory Queue, Notifications Queue.", payload: "SQS:SendMessage -> payments-q, inventory-q, notifications-q" },
+          { hop: "Hop 4: Worker Fleet", service: "Async Worker Fleet (ECS)", nodeId: "node-workers", details: "Worker containers process payment via Stripe, reserve stock, and upload invoice PDF to Amazon S3.", payload: "WORKER TASK: Invoice PDF saved to s3://company-invoices/ord-771.pdf" }
+        ]
+      },
+      genai: {
+        title: "SCENARIO: Generative AI Query (POST /api/v1/ai/ask)",
+        steps: [
+          { hop: "Hop 1: Query Ingest", service: "ALB -> ECS AI Gateway", nodeId: "node-ecs", details: "User prompts: 'What are the termination protection options for RDS?'", payload: "PROMPT: 'What are the termination protection options for RDS?'" },
+          { hop: "Hop 2: Vector Search", service: "Amazon Aurora (pgvector)", nodeId: "node-aurora", details: "ECS computes cosine distance to retrieve top 3 relevant documentation chunks.", payload: "SQL: SELECT doc_chunk FROM kb_chunks ORDER BY embedding <=> $1 LIMIT 3;" },
+          { hop: "Hop 3: Foundation Model", service: "Amazon Bedrock", nodeId: "node-bedrock", details: "Augmented prompt invoked on Anthropic Claude 3.5 Sonnet on Amazon Bedrock.", payload: "BEDROCK:InvokeModelWithResponseStream [Model: claude-3-5-sonnet, Tokens: 420]" },
+          { hop: "Hop 4: SSE Stream", service: "Bedrock -> ECS -> Client", nodeId: "node-ecs", details: "Tokens streamed back through ALB via Server-Sent Events (SSE) to browser UI.", payload: "SSE CHUNKS: 'RDS termination protection prevents accidental deletion via Console or API...'" }
+        ]
+      }
+    };
+
+    // State Variables
+    let currentScenarioKey = 'dynamic';
+    let currentSimStepIndex = 0;
+    let userAnswers = {};
+    let streakCount = 0;
+
+    // View Navigation
+    function switchView(viewName) {
+      document.querySelectorAll('.sidebar-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.view === viewName);
+      });
+      document.querySelectorAll('.view-pane').forEach(pane => {
+        pane.classList.toggle('active', pane.id === `view-${viewName}`);
+      });
+      const main = document.getElementById('main-viewport');
+      if (main) main.scrollTop = 0;
+    }
+
+    // Sidebar Collapse Toggle
+    function toggleSidebar() {
+      const sidebar = document.getElementById('app-sidebar');
+      sidebar.classList.toggle('collapsed');
+    }
+
+    // Inspector Multi-Dock Mode (Left, Center Modal, Right)
+    let currentInspectorDock = localStorage.getItem('antigravity_inspector_dock') || 'center';
+
+    function setInspectorDock(mode) {
+      currentInspectorDock = mode;
+      localStorage.setItem('antigravity_inspector_dock', mode);
+      const inspector = document.getElementById('app-inspector');
+      const backdrop = document.getElementById('inspector-backdrop');
+      if (!inspector) return;
+
+      inspector.classList.remove('mode-left', 'mode-center', 'mode-right');
+      inspector.classList.add(`mode-${mode}`);
+
+      document.querySelectorAll('.dock-mode-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById(`dock-btn-${mode}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      if (backdrop) {
+        if (mode === 'center' && !inspector.classList.contains('hidden')) {
+          backdrop.classList.add('active');
+        } else {
+          backdrop.classList.remove('active');
+        }
+      }
+    }
+
+    // Inspector Toggle
+    function toggleInspector() {
+      const inspector = document.getElementById('app-inspector');
+      const backdrop = document.getElementById('inspector-backdrop');
+      if (!inspector) return;
+      inspector.classList.toggle('hidden');
+      if (backdrop) {
+        if (!inspector.classList.contains('hidden') && currentInspectorDock === 'center') {
+          backdrop.classList.add('active');
+        } else {
+          backdrop.classList.remove('active');
+        }
+      }
+    }
+
+    // Fullscreen Toggle
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          showToast(`Error enabling fullscreen: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    // Layer Filtering
+    function filterLayers(layerName, btn) {
+      if (btn) {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+      }
+
+      document.querySelectorAll('.tier-zone').forEach(zone => {
+        if (layerName === 'all') {
+          zone.style.display = 'block';
+        } else {
+          zone.style.display = (zone.dataset.layer === layerName) ? 'block' : 'none';
+        }
+      });
+    }
+
+    function scrollToTier(tierId) {
+      switchView('explorer');
+      const el = document.getElementById(tierId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    // Node Inspector
+    function inspectNode(nodeKey) {
+      const data = NODE_METADATA[nodeKey];
+      if (!data) return;
+
+      document.querySelectorAll('.cloud-node').forEach(n => n.classList.remove('selected'));
+      const activeEl = document.getElementById(`node-${nodeKey}`);
+      if (activeEl) activeEl.classList.add('selected');
+
+      const inspector = document.getElementById('app-inspector');
+      const backdrop = document.getElementById('inspector-backdrop');
+      if (inspector) {
+        setInspectorDock(currentInspectorDock);
+        inspector.classList.remove('hidden');
+        if (currentInspectorDock === 'center' && backdrop) {
+          backdrop.classList.add('active');
+        }
+      }
+
+      document.getElementById('insp-title').textContent = data.title;
+      document.getElementById('insp-category').textContent = data.category;
+      document.getElementById('insp-role').textContent = data.role;
+      document.getElementById('insp-pillar').textContent = data.pillar;
+      document.getElementById('insp-failover').textContent = data.failover;
+
+      const paramTable = document.getElementById('insp-params');
+      paramTable.innerHTML = '';
+      data.specs.forEach(([k, v]) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${k}</td><td>${v}</td>`;
+        paramTable.appendChild(row);
+      });
+    }
+
+    function readInspectorText() {
+      if (!('speechSynthesis' in window)) {
+        showToast("Speech synthesis not supported in this browser.");
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const title = document.getElementById('insp-title').textContent;
+      const role = document.getElementById('insp-role').textContent;
+      const failover = document.getElementById('insp-failover').textContent;
+      const textToSpeak = `${title}. Role in production architecture: ${role}. High availability and failover mechanism: ${failover}`;
+
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+      showToast(`Reading audio for ${title}...`);
+    }
+
+    // Simulation Handlers
+    function runSimulation(scenarioKey, btn) {
+      currentScenarioKey = scenarioKey;
+      currentSimStepIndex = 0;
+
+      if (btn) {
+        document.querySelectorAll('.sim-card-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+
+      const scenario = SIM_SCENARIOS[scenarioKey];
+      document.getElementById('sim-active-scenario-title').textContent = scenario.title;
+      document.getElementById('sim-steps-container').innerHTML = '';
+      stepNextSimulation();
+    }
+
+    function stepNextSimulation() {
+      const scenario = SIM_SCENARIOS[currentScenarioKey];
+      if (currentSimStepIndex >= scenario.steps.length) {
+        showToast("Simulation scenario complete! Select another or reset.");
+        return;
+      }
+
+      const step = scenario.steps[currentSimStepIndex];
+      const container = document.getElementById('sim-steps-container');
+
+      document.querySelectorAll('.cloud-node').forEach(n => n.classList.remove('pulse-glow'));
+      if (step.nodeId) {
+        const targetNode = document.getElementById(step.nodeId);
+        if (targetNode) {
+          targetNode.classList.add('pulse-glow');
+        }
+      }
+
+      const row = document.createElement('div');
+      row.className = 'sim-step-row';
+      row.innerHTML = `
+        <div class="step-log-badge">
+          <span>${step.service}</span>
+          <span style="font-size: 0.72rem; color: var(--gh-text-muted);">${step.hop}</span>
+        </div>
+        <div class="step-log-desc">${step.details}</div>
+        <div class="step-log-code">${step.payload}</div>
+      `;
+      container.appendChild(row);
+      container.scrollTop = container.scrollHeight;
+      currentSimStepIndex++;
+    }
+
+    function resetSimulation() {
+      document.querySelectorAll('.cloud-node').forEach(n => n.classList.remove('pulse-glow'));
+      runSimulation(currentScenarioKey);
+    }
+
+    // Drill Question Builder
+    function initPracticeQuestions() {
+      const container = document.getElementById('drill-questions-deck');
+      container.innerHTML = '';
+
+      const moduleMap = {};
+      PRACTICE_QUESTIONS.forEach(q => {
+        if (!moduleMap[q.module]) {
+          moduleMap[q.module] = { id: q.module, name: q.moduleName, questions: [] };
+        }
+        moduleMap[q.module].questions.push(q);
+      });
+
+      Object.values(moduleMap).forEach(mod => {
+        const card = document.createElement('div');
+        card.className = 'drill-module-card';
+        card.dataset.module = mod.id;
+        card.innerHTML = `
+          <div class="module-header">
+            <div>
+              <span class="module-badge">PART ${mod.id}</span>
+              <span class="module-title-text">${mod.name}</span>
+            </div>
+            <span class="nav-badge">${mod.questions.length} Items</span>
+          </div>
+          <div class="q-container" id="module-deck-${mod.id}"></div>
+        `;
+        container.appendChild(card);
+
+        const deck = card.querySelector(`#module-deck-${mod.id}`);
+        mod.questions.forEach(q => {
+          const row = document.createElement('div');
+          row.className = 'drill-q-row';
+          row.id = `q-card-${q.id}`;
+          row.innerHTML = `
+            <div class="drill-q-stem">
+              <strong>${q.id}.</strong> ${q.stem.replace(`[ ${q.id} ]`, `<span class="blank-pill">[ ${q.id} ]</span>`)}
+            </div>
+            <div class="drill-input-group">
+              <input type="text" class="drill-input" id="input-${q.id}" placeholder="Enter AWS service or architecture keyword..." onkeydown="handleInputKey(${q.id}, event)">
+              <button class="btn-gh btn-gh-primary" onclick="checkAnswer(${q.id})">Submit</button>
+              <button class="btn-gh" onclick="showHint(${q.id})">Hint</button>
+              <button class="btn-gh" onclick="revealAnswer(${q.id})">Reveal</button>
+            </div>
+            <div class="feedback-drawer" id="feedback-${q.id}"></div>
+          `;
+          deck.appendChild(row);
+        });
+      });
+    }
+
+    function filterDrillModule(modId, btn) {
+      if (btn) {
+        btn.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+      }
+
+      document.querySelectorAll('.drill-module-card').forEach(card => {
+        if (modId === 'all') {
+          card.style.display = 'block';
+        } else {
+          card.style.display = (card.dataset.module == modId) ? 'block' : 'none';
+        }
+      });
+    }
+
+    function handleInputKey(qId, e) {
+      if (e.key === 'Enter') {
+        checkAnswer(qId);
+      }
+    }
+
+    function cleanString(str) {
+      return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+    }
+
+    function checkAnswer(qId) {
+      const q = PRACTICE_QUESTIONS.find(i => i.id === qId);
+      if (!q) return;
+
+      const input = document.getElementById(`input-${qId}`);
+      const val = cleanString(input.value);
+      const card = document.getElementById(`q-card-${qId}`);
+      const feedback = document.getElementById(`feedback-${qId}`);
+
+      if (!val) {
+        showToast("Please enter an answer before checking.");
+        return;
+      }
+
+      const isCorrect = q.answers.some(ans => cleanString(ans) === val);
+      feedback.className = `feedback-drawer show`;
+
+      if (isCorrect) {
+        card.classList.remove('incorrect');
+        card.classList.add('correct');
+        feedback.innerHTML = `
+          <div style="font-weight: 700; color: var(--gh-accent-green); display: flex; align-items: center; gap: 0.4rem;">
+            <span>✓</span> Correct Solution
+          </div>
+          <div style="color: var(--gh-text-secondary);">${q.rationale}</div>
+        `;
+        userAnswers[qId] = true;
+        streakCount++;
+        showToast(`Correct! Q${qId} solved.`);
+      } else {
+        card.classList.remove('correct');
+        card.classList.add('incorrect');
+        feedback.innerHTML = `
+          <div style="font-weight: 700; color: var(--gh-accent-red); display: flex; align-items: center; gap: 0.4rem;">
+            <span>✕</span> Incorrect Answer
+          </div>
+          <div style="color: var(--gh-text-secondary);">${q.hint}</div>
+        `;
+        userAnswers[qId] = false;
+        streakCount = 0;
+      }
+      updateScoreboard();
+    }
+
+    function showHint(qId) {
+      const q = PRACTICE_QUESTIONS.find(i => i.id === qId);
+      const feedback = document.getElementById(`feedback-${qId}`);
+      feedback.className = `feedback-drawer show`;
+      feedback.innerHTML = `
+        <div style="font-weight: 700; color: var(--gh-accent-blue); display: flex; align-items: center; gap: 0.4rem;">
+          <span>💡</span> Architectural Clue
+        </div>
+        <div style="color: var(--gh-text-secondary);">${q.hint}</div>
+      `;
+    }
+
+    function revealAnswer(qId) {
+      const q = PRACTICE_QUESTIONS.find(i => i.id === qId);
+      const card = document.getElementById(`q-card-${qId}`);
+      const feedback = document.getElementById(`feedback-${qId}`);
+      const input = document.getElementById(`input-${qId}`);
+
+      input.value = q.answers[0].toUpperCase();
+      card.classList.remove('incorrect');
+      card.classList.add('correct');
+
+      feedback.className = `feedback-drawer show`;
+      feedback.innerHTML = `
+        <div style="font-weight: 700; color: var(--gh-accent-aws); display: flex; align-items: center; gap: 0.4rem;">
+          <span>📖</span> Solution: <span style="font-family: var(--font-mono);">${q.answers[0].toUpperCase()}</span>
+        </div>
+        <div style="color: var(--gh-text-secondary);">${q.rationale}</div>
+      `;
+      userAnswers[qId] = true;
+      updateScoreboard();
+    }
+
+    function fillAllCorrect() {
+      PRACTICE_QUESTIONS.forEach(q => revealAnswer(q.id));
+      showToast("All 31 solutions auto-filled for study mode.");
+    }
+
+    function resetPractice() {
+      userAnswers = {};
+      streakCount = 0;
+      PRACTICE_QUESTIONS.forEach(q => {
+        const input = document.getElementById(`input-${q.id}`);
+        if (input) input.value = '';
+        const card = document.getElementById(`q-card-${q.id}`);
+        if (card) card.classList.remove('correct', 'incorrect');
+        const feedback = document.getElementById(`feedback-${q.id}`);
+        if (feedback) {
+          feedback.className = 'feedback-drawer';
+          feedback.innerHTML = '';
+        }
+      });
+      updateScoreboard();
+      showToast("Practice drill reset.");
+    }
+
+    function updateScoreboard() {
+      const correct = Object.values(userAnswers).filter(Boolean).length;
+      const total = PRACTICE_QUESTIONS.length;
+      const pct = Math.round((correct / total) * 100);
+
+      document.getElementById('drill-score-display').textContent = `${correct} / ${total}`;
+      document.getElementById('drill-accuracy-display').textContent = `${pct}%`;
+      document.getElementById('drill-streak-display').textContent = `${streakCount} 🔥`;
+      document.getElementById('header-drill-badge').textContent = `${correct}/${total}`;
+
+      document.getElementById('sidebar-pct-label').textContent = `${pct}%`;
+      document.getElementById('sidebar-progress-fill').style.width = `${pct}%`;
+      document.getElementById('sidebar-solved-count').textContent = `${correct} of ${total} Solved`;
+      document.getElementById('sidebar-streak-count').textContent = `${streakCount} Streak`;
+    }
+
+    // Global Search Functionality
+    function handleGlobalSearch(query) {
+      const term = (query || '').toLowerCase().trim();
+      if (!term) {
+        document.querySelectorAll('.cloud-node').forEach(n => n.style.display = 'flex');
+        document.querySelectorAll('.drill-q-row').forEach(q => q.style.display = 'flex');
+        return;
+      }
+
+      document.querySelectorAll('.cloud-node').forEach(node => {
+        const text = node.textContent.toLowerCase();
+        node.style.display = text.includes(term) ? 'flex' : 'none';
+      });
+
+      document.querySelectorAll('.drill-q-row').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(term) ? 'flex' : 'none';
+      });
+    }
+
+    // Toast Utility
+    function showToast(msg) {
+      const toast = document.getElementById('gh-toast');
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3200);
+    }
+
+    // Init on Load
+    document.addEventListener('DOMContentLoaded', () => {
+      initPracticeQuestions();
+      runSimulation('dynamic');
+      inspectNode('route53');
+    });
+  </script>
+</body>
+</html>
