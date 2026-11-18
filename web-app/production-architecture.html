@@ -213,7 +213,7 @@
     .command-search-box input {
       background: transparent;
       border: none;
-      outline: none;
+      outline: 2px solid transparent; outline-offset: 2px;
       color: var(--gh-text-primary);
       font-size: 0.84rem;
       font-family: inherit;
@@ -766,7 +766,7 @@
       flex-direction: column;
       overflow-y: auto;
       z-index: 1000;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     /* Mode 1: Centered Focus Modal (Default) */
@@ -844,7 +844,7 @@
       padding: 0.2rem 0.5rem;
       border-radius: 4px;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: transform 0.15s ease, opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
       display: flex;
       align-items: center;
       gap: 0.25rem;
@@ -1181,7 +1181,7 @@
       color: var(--gh-text-primary);
       font-family: var(--font-mono);
       font-size: 0.85rem;
-      outline: none;
+      outline: 2px solid transparent; outline-offset: 2px;
       transition: var(--transition-smooth);
     }
 
@@ -1254,6 +1254,7 @@
       animation: paneFadeIn 0.2s ease;
     }
   </style>
+<style>:where(button[data-btn-reset]){font:inherit;color:inherit;background:transparent;border:none;padding:0;margin:0;text-align:inherit;}</style>
 </head>
 <body>
   <div class="app-root">
@@ -1492,7 +1493,7 @@
               <div class="tier-label-bar">Tier 1: Global Edge & Perimeter Defense</div>
               <div class="node-grid">
                 
-                <div class="cloud-node" id="node-route53" onclick="inspectNode('route53')">
+                <button type="button" class="cloud-node" id="node-route53" onclick="inspectNode('route53')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
                   </div>
@@ -1501,9 +1502,9 @@
                     <span class="node-sub">Global Anycast DNS</span>
                   </div>
                   <span class="node-tag-pill">Port 53</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-cloudfront" onclick="inspectNode('cloudfront')">
+                <button type="button" class="cloud-node" id="node-cloudfront" onclick="inspectNode('cloudfront')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                   </div>
@@ -1512,9 +1513,9 @@
                     <span class="node-sub">Global Edge CDN</span>
                   </div>
                   <span class="node-tag-pill">450+ PoPs</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-waf" onclick="inspectNode('waf')">
+                <button type="button" class="cloud-node" id="node-waf" onclick="inspectNode('waf')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                   </div>
@@ -1523,9 +1524,9 @@
                     <span class="node-sub">Layer 7 DDoS & OWASP</span>
                   </div>
                   <span class="node-tag-pill">Rate Limit</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-s3static" onclick="inspectNode('s3static')">
+                <button type="button" class="cloud-node" id="node-s3static" onclick="inspectNode('s3static')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
                   </div>
@@ -1534,7 +1535,7 @@
                     <span class="node-sub">SPA Frontend (OAC)</span>
                   </div>
                   <span class="node-tag-pill">11 9s</span>
-                </div>
+                </button>
 
               </div>
             </div>
@@ -1546,7 +1547,7 @@
               <div class="tier-label-bar">Tier 2: Public Subnets (AZ-1 & AZ-2)</div>
               <div class="node-grid">
 
-                <div class="cloud-node" id="node-alb" onclick="inspectNode('alb')">
+                <button type="button" class="cloud-node" id="node-alb" onclick="inspectNode('alb')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                   </div>
@@ -1555,9 +1556,9 @@
                     <span class="node-sub">L7 Path Ingress</span>
                   </div>
                   <span class="node-tag-pill">Multi-AZ</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-apigw" onclick="inspectNode('apigw')">
+                <button type="button" class="cloud-node" id="node-apigw" onclick="inspectNode('apigw')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                   </div>
@@ -1566,9 +1567,9 @@
                     <span class="node-sub">Serverless REST / WS</span>
                   </div>
                   <span class="node-tag-pill">Throttling</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-nat" onclick="inspectNode('nat')">
+                <button type="button" class="cloud-node" id="node-nat" onclick="inspectNode('nat')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                   </div>
@@ -1577,7 +1578,7 @@
                     <span class="node-sub">Private Subnet Egress</span>
                   </div>
                   <span class="node-tag-pill">AZ Redundant</span>
-                </div>
+                </button>
 
               </div>
             </div>
@@ -1589,7 +1590,7 @@
               <div class="tier-label-bar">Tier 3: Private Compute & Microservices</div>
               <div class="node-grid">
 
-                <div class="cloud-node" id="node-ecs" onclick="inspectNode('ecs')">
+                <button type="button" class="cloud-node" id="node-ecs" onclick="inspectNode('ecs')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
                   </div>
@@ -1598,9 +1599,9 @@
                     <span class="node-sub">Serverless Containers</span>
                   </div>
                   <span class="node-tag-pill">Auto-Scale</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-lambda" onclick="inspectNode('lambda')">
+                <button type="button" class="cloud-node" id="node-lambda" onclick="inspectNode('lambda')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                   </div>
@@ -1609,9 +1610,9 @@
                     <span class="node-sub">Stateless Functions</span>
                   </div>
                   <span class="node-tag-pill">Event-Driven</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-sns" onclick="inspectNode('sns')">
+                <button type="button" class="cloud-node" id="node-sns" onclick="inspectNode('sns')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                   </div>
@@ -1620,9 +1621,9 @@
                     <span class="node-sub">Pub/Sub Fan-Out Topic</span>
                   </div>
                   <span class="node-tag-pill">1-to-Many</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-sqs" onclick="inspectNode('sqs')">
+                <button type="button" class="cloud-node" id="node-sqs" onclick="inspectNode('sqs')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
                   </div>
@@ -1631,9 +1632,9 @@
                     <span class="node-sub">Async Decoupling Buffer</span>
                   </div>
                   <span class="node-tag-pill">FIFO / Std</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-workers" onclick="inspectNode('workers')">
+                <button type="button" class="cloud-node" id="node-workers" onclick="inspectNode('workers')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/></svg>
                   </div>
@@ -1642,7 +1643,7 @@
                     <span class="node-sub">Queue Consumer Cluster</span>
                   </div>
                   <span class="node-tag-pill">Batch Ops</span>
-                </div>
+                </button>
 
               </div>
             </div>
@@ -1654,7 +1655,7 @@
               <div class="tier-label-bar">Tier 4: Isolated Database & Storage Layer</div>
               <div class="node-grid">
 
-                <div class="cloud-node" id="node-elasticache" onclick="inspectNode('elasticache')">
+                <button type="button" class="cloud-node" id="node-elasticache" onclick="inspectNode('elasticache')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                   </div>
@@ -1663,9 +1664,9 @@
                     <span class="node-sub">Redis / Sub-ms Caching</span>
                   </div>
                   <span class="node-tag-pill">In-Memory</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-aurora" onclick="inspectNode('aurora')">
+                <button type="button" class="cloud-node" id="node-aurora" onclick="inspectNode('aurora')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
                   </div>
@@ -1674,9 +1675,9 @@
                     <span class="node-sub">Writer + Read Replica</span>
                   </div>
                   <span class="node-tag-pill">Auto-Failover</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-dynamo" onclick="inspectNode('dynamo')">
+                <button type="button" class="cloud-node" id="node-dynamo" onclick="inspectNode('dynamo')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
                   </div>
@@ -1685,9 +1686,9 @@
                     <span class="node-sub">High-Scale NoSQL</span>
                   </div>
                   <span class="node-tag-pill">Single-ms</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-s3app" onclick="inspectNode('s3app')">
+                <button type="button" class="cloud-node" id="node-s3app" onclick="inspectNode('s3app')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
                   </div>
@@ -1696,7 +1697,7 @@
                     <span class="node-sub">Blobs / Durable Objects</span>
                   </div>
                   <span class="node-tag-pill">Lifecycle</span>
-                </div>
+                </button>
 
               </div>
             </div>
@@ -1706,7 +1707,7 @@
               <div class="tier-label-bar">Tier 5: Artificial Intelligence & Machine Learning</div>
               <div class="node-grid">
 
-                <div class="cloud-node" id="node-bedrock" onclick="inspectNode('bedrock')">
+                <button type="button" class="cloud-node" id="node-bedrock" onclick="inspectNode('bedrock')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/></svg>
                   </div>
@@ -1715,9 +1716,9 @@
                     <span class="node-sub">Managed GenAI LLM API</span>
                   </div>
                   <span class="node-tag-pill">Serverless</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-sagemaker" onclick="inspectNode('sagemaker')">
+                <button type="button" class="cloud-node" id="node-sagemaker" onclick="inspectNode('sagemaker')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
                   </div>
@@ -1726,7 +1727,7 @@
                     <span class="node-sub">Real-Time ML Inferences</span>
                   </div>
                   <span class="node-tag-pill">GPU Nodes</span>
-                </div>
+                </button>
 
               </div>
             </div>
@@ -1736,7 +1737,7 @@
               <div class="tier-label-bar">Tier 6: Cross-Cutting Governance & DevOps</div>
               <div class="node-grid">
 
-                <div class="cloud-node" id="node-cloudwatch" onclick="inspectNode('cloudwatch')">
+                <button type="button" class="cloud-node" id="node-cloudwatch" onclick="inspectNode('cloudwatch')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                   </div>
@@ -1745,9 +1746,9 @@
                     <span class="node-sub">Logs, Metrics & Alarms</span>
                   </div>
                   <span class="node-tag-pill">Telemetry</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-xray" onclick="inspectNode('xray')">
+                <button type="button" class="cloud-node" id="node-xray" onclick="inspectNode('xray')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                   </div>
@@ -1756,9 +1757,9 @@
                     <span class="node-sub">Distributed Trace Spans</span>
                   </div>
                   <span class="node-tag-pill">p99 Latency</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-kms" onclick="inspectNode('kms')">
+                <button type="button" class="cloud-node" id="node-kms" onclick="inspectNode('kms')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   </div>
@@ -1767,9 +1768,9 @@
                     <span class="node-sub">HSM Encryption & Secrets</span>
                   </div>
                   <span class="node-tag-pill">FIPS 140-3</span>
-                </div>
+                </button>
 
-                <div class="cloud-node" id="node-cicd" onclick="inspectNode('cicd')">
+                <button type="button" class="cloud-node" id="node-cicd" onclick="inspectNode('cicd')" data-btn-reset>
                   <div class="node-icon-box">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                   </div>
@@ -1778,7 +1779,7 @@
                     <span class="node-sub">Blue/Green Deployments</span>
                   </div>
                   <span class="node-tag-pill">CI/CD</span>
-                </div>
+                </button>
 
               </div>
             </div>
@@ -2002,7 +2003,7 @@
       <!-- =====================================================================
            INSPECTOR PANEL - CENTERED MODAL & DUAL-DOCKABLE MODES
            ===================================================================== -->
-      <div class="inspector-backdrop" id="inspector-backdrop" onclick="toggleInspector()"></div>
+      <button type="button" class="inspector-backdrop" id="inspector-backdrop" onclick="toggleInspector()" data-btn-reset></button>
       <aside class="app-inspector mode-center hidden" id="app-inspector">
         <div class="inspector-head">
           <div class="inspector-head-title">
