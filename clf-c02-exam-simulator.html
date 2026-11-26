@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS CLF-C02 90-Minute Exam Simulator</title>
+  <style>
+    :root {
+      --bg-canvas: #0d1117;
+      --bg-surface: #161b22;
+      --bg-elevated: #1c222b;
+      --bg-hover: #212834;
+      --border-default: #30363d;
+      --border-strong: #484f58;
+      --text-primary: #f0f6fc;
+      --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+      --aws-orange: #ff9900;
+      --aws-orange-dim: rgba(255, 153, 0, 0.14);
+      --accent-blue: #58a6ff;
+      --accent-blue-dim: rgba(88, 166, 255, 0.14);
+      --success: #2ea043;
+      --success-bright: #3fb950;
+      --success-dim: rgba(46, 160, 67, 0.15);
+      --danger: #f85149;
+      --danger-dim: rgba(248, 81, 73, 0.15);
+      --warn: #d29922;
+      --warn-dim: rgba(210, 153, 34, 0.16);
+      --radius: 8px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-canvas);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-shell {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 20px 20px 56px;
+    }
+
+    /* Header */
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-default);
+      margin-bottom: 20px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-badge {
+      width: 38px; height: 38px;
+      border-radius: var(--radius);
+      background: var(--aws-orange-dim);
+      border: 1px solid var(--aws-orange);
+      color: var(--aws-orange);
+      display: grid; place-items: center;
+      font-weight: 700; font-family: var(--font-mono); font-size: 12px;
+    }
+    .brand h1 { font-size: 18px; font-weight: 600; }
+    .brand p { font-size: 12.5px; color: var(--text-secondary); }
+
+    .nav-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-default);
+      color: var(--text-primary);
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 12.5px; font-weight: 500;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.14s ease, border-color 0.14s ease;
+    }
+    .btn:hover:not(:disabled) { background: var(--bg-hover); border-color: var(--border-strong); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary {
+      background: var(--aws-orange); border-color: var(--aws-orange);
+      color: #0d1117; font-weight: 600;
+    }
+    .btn-primary:hover:not(:disabled) { background: #ffad33; border-color: #ffad33; }
+    .btn-success { background: var(--success); border-color: var(--success); color: #fff; font-weight: 600; }
+    .btn-success:hover:not(:disabled) { background: var(--success-bright); }
+    .btn-flag.flagged { border-color: var(--warn); background: var(--warn-dim); color: #f2cc60; }
+
+    /* Lobby */
+    .lobby-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .exam-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex; flex-direction: column; justify-content: space-between; gap: 16px;
+    }
+    .exam-card h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .exam-card p { font-size: 13px; color: var(--text-secondary); }
+
+    .meta-row {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+    }
+    .pill {
+      font-size: 11px; font-family: var(--font-mono);
+      padding: 3px 8px; border-radius: 4px;
+      background: var(--bg-canvas); border: 1px solid var(--border-default);
+      color: var(--text-secondary);
+    }
+    .pill.pass { border-color: var(--success); color: var(--success-bright); background: var(--success-dim); }
+    .pill.accent { border-color: rgba(255,153,0,0.45); color: var(--aws-orange); }
+
+    .card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* Exam Active Layout */
+    .exam-workspace {
+      display: none;
+      grid-template-columns: 1fr 290px;
+      gap: 18px;
+      align-items: start;
+    }
+    .exam-workspace.visible { display: grid; }
+    @media (max-width: 920px) { .exam-workspace { grid-template-columns: 1fr; } }
+
+    .exam-hud {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 12px;
+      background: var(--bg-surface); border: 1px solid var(--border-default);
+      border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px;
+    }
+    .timer-box {
+      font-family: var(--font-mono); font-size: 20px; font-weight: 700;
+      color: var(--aws-orange); letter-spacing: 0.03em;
+    }
+    .timer-box.urgent { color: var(--danger); }
+
+    .question-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+    .q-header {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 10px; margin-bottom: 14px;
+      padding-bottom: 12px; border-bottom: 1px solid var(--border-default);
+    }
+    .q-num { font-family: var(--font-mono); font-size: 13px; color: var(--text-secondary); }
+    .q-prompt { font-size: 15.5px; font-weight: 500; margin-bottom: 18px; color: var(--text-primary); }
+
+    .options-list { display: flex; flex-direction: column; gap: 10px; }
+    .option-btn {
+      width: 100%; text-align: left;
+      background: var(--bg-canvas); border: 1px solid var(--border-default);
+      border-radius: var(--radius); padding: 13px 14px;
+      color: var(--text-primary); cursor: pointer;
+      display: flex; align-items: flex-start; gap: 12px;
+      font-size: 14px; transition: border-color 0.14s ease, background 0.14s ease;
+    }
+    .option-btn:hover { background: var(--bg-elevated); border-color: var(--border-strong); }
+    .option-btn.selected {
+      background: var(--accent-blue-dim); border-color: var(--accent-blue);
+      box-shadow: inset 0 0 0 1px var(--accent-blue);
+    }
+    .option-btn.correct { background: var(--success-dim); border-color: var(--success); }
+    .option-btn.wrong { background: var(--danger-dim); border-color: var(--danger); }
+
+    .opt-key {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 5px;
+      background: var(--bg-surface); border: 1px solid var(--border-default);
+      display: grid; place-items: center;
+      font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+      color: var(--text-secondary); margin-top: 1px;
+    }
+    .option-btn.selected .opt-key { background: var(--accent-blue); border-color: var(--accent-blue); color: #0d1117; }
+    .option-btn.correct .opt-key { background: var(--success); border-color: var(--success); color: #fff; }
+    .option-btn.wrong .opt-key { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+    .rationale-box {
+      display: none;
+      margin-top: 16px; padding: 14px;
+      border-radius: var(--radius); border: 1px solid var(--border-strong);
+      background: var(--bg-elevated); font-size: 13.5px;
+    }
+    .rationale-box.visible { display: block; }
+    .rationale-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
+
+    .q-footer {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+      gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-default);
+    }
+
+    /* Navigator Sidebar */
+    .nav-panel {
+      background: var(--bg-surface); border: 1px solid var(--border-default);
+      border-radius: var(--radius); padding: 16px;
+    }
+    .nav-panel h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-bottom: 12px; }
+    .nav-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+      margin-bottom: 14px;
+    }
+    .nav-cell {
+      height: 32px; border-radius: 5px;
+      background: var(--bg-canvas); border: 1px solid var(--border-default);
+      color: var(--text-secondary); font-family: var(--font-mono); font-size: 12px;
+      cursor: pointer; position: relative;
+    }
+    .nav-cell:hover { border-color: var(--border-strong); color: var(--text-primary); }
+    .nav-cell.current { border-color: var(--aws-orange); color: var(--aws-orange); font-weight: 700; box-shadow: inset 0 0 0 1px var(--aws-orange); }
+    .nav-cell.answered { background: var(--accent-blue-dim); border-color: rgba(88,166,255,0.5); color: var(--text-primary); }
+    .nav-cell.flagged::after {
+      content: ''; position: absolute; top: 3px; right: 3px;
+      width: 6px; height: 6px; border-radius: 50%; background: var(--warn);
+    }
+    .nav-legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; color: var(--text-muted); margin-bottom: 14px; }
+
+    /* Report View */
+    .report-panel { display: none; }
+    .report-panel.visible { display: block; }
+
+    .report-hero {
+      display: grid; grid-template-columns: 200px 1fr; gap: 24px; align-items: center;
+      background: var(--bg-surface); border: 1px solid var(--border-default);
+      border-radius: var(--radius); padding: 24px; margin-bottom: 20px;
+    }
+    @media (max-width: 700px) { .report-hero { grid-template-columns: 1fr; text-align: center; } }
+
+    .ring-wrap { position: relative; width: 164px; height: 164px; margin: 0 auto; }
+    .ring-wrap svg { transform: rotate(-90deg); width: 164px; height: 164px; }
+    .ring-center {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .ring-score { font-family: var(--font-mono); font-size: 30px; font-weight: 700; }
+    .ring-sub { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); }
+
+    .domain-bars { display: grid; gap: 12px; margin-top: 14px; }
+    .d-row { display: grid; gap: 5px; }
+    .d-row-top { display: flex; justify-content: space-between; font-size: 13px; }
+    .d-track { height: 8px; background: var(--bg-canvas); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-default); }
+    .d-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+    .review-controls { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .review-card {
+      background: var(--bg-surface); border: 1px solid var(--border-default);
+      border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+    }
+    .review-card.missed { border-left: 3px solid var(--danger); }
+    .review-card.passed { border-left: 3px solid var(--success); }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="brand">
+        <div class="brand-badge">SIM</div>
+        <div>
+          <h1>AWS CLF-C02 90-Minute Exam Simulator</h1>
+          <p>Pearson VUE-style timed testing, per-domain scoring, and Web Speech rationales</p>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <a href="clf-c02-matching-game.html" class="btn">Open Matching Arena &amp; Decision Trees</a>
+        <button class="btn" id="btnBackLobby" style="display:none;">Exit to Exam Lobby</button>
+      </div>
+    </header>
+
+    <!-- LOBBY VIEW -->
+    <section id="lobbyView">
+      <div class="exam-hud">
+        <div>
+          <strong style="font-size:14px;">Target: 80%+ (52 / 65) before Dec 2, 2026</strong>
+          <div style="font-size:12.5px; color:var(--text-secondary);">Choose <strong>Timed Exam Mode</strong> (90:00 countdown, results at end) or <strong>Study Mode</strong> (instant rationale + audio narration per question).</div>
+        </div>
+        <span class="pill accent" id="lobbyCountdown">7 days until Dec 2</span>
+      </div>
+      <div class="lobby-grid" id="examCards"></div>
+    </section>
+
+    <!-- EXAM VIEW -->
+    <section id="examView" style="display:none;">
+      <div class="exam-hud">
+        <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
+          <div>
+            <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted);" id="activeExamName">Practice Exam</div>
+            <div style="font-size:13px; color:var(--text-secondary);" id="activeModeLabel">Timed Mode</div>
+          </div>
+          <div class="timer-box" id="timerDisplay">90:00</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <button class="btn" id="btnPauseTimer">Pause</button>
+          <button class="btn" id="btnReadQuestion">Read Question</button>
+          <button class="btn btn-success" id="btnSubmitExam">Submit &amp; Grade Exam</button>
+        </div>
+      </div>
+
+      <div class="exam-workspace visible">
+        <div class="question-panel">
+          <div class="q-header">
+            <span class="q-num" id="qCounter">Question 1 of 65</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span class="pill" id="qDomainBadge">Domain 1</span>
+              <span class="pill accent" id="qTypeBadge">Single Choice</span>
+              <button class="btn btn-flag" id="btnFlag">Flag for Review</button>
+            </div>
+          </div>
+          <div class="q-prompt" id="qPrompt"></div>
+          <div class="options-list" id="optionsList"></div>
+
+          <div class="rationale-box" id="studyRationale">
+            <div class="rationale-top">
+              <strong id="studyVerdict">Explanation</strong>
+              <button class="btn" id="btnReadRationale">Read Explanation</button>
+            </div>
+            <p id="studyRationaleText" style="color:#d0d7de;"></p>
+          </div>
+
+          <div class="q-footer">
+            <button class="btn" id="btnPrev">Previous</button>
+            <div style="display:flex; gap:8px;">
+              <button class="btn" id="btnCheckStudy" style="display:none;">Check Answer</button>
+              <button class="btn btn-primary" id="btnNext">Next Question</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="nav-panel">
+          <h3>Question Navigator (<span id="navAnsweredCount">0</span>/65)</h3>
+          <div class="nav-legend">
+            <span>Blue = Answered</span>
+            <span>Amber dot = Flagged</span>
+          </div>
+          <div class="nav-grid" id="navGrid"></div>
+          <button class="btn" id="btnNextFlagged" style="width:100%; justify-content:center;">Jump to Next Flagged</button>
+        </aside>
+      </div>
+    </section>
+
+    <!-- REPORT VIEW -->
+    <section id="reportView" class="report-panel">
+      <div class="report-hero">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#212834" stroke-width="10" />
+            <circle id="scoreRing" cx="60" cy="60" r="52" fill="none" stroke="#3fb950" stroke-width="10"
+              stroke-dasharray="326.73" stroke-dashoffset="326.73" stroke-linecap="round" />
+          </svg>
+          <div class="ring-center">
+            <div class="ring-score" id="scaledScoreVal">700</div>
+            <div class="ring-sub" id="passStatusLabel">PASS</div>
+          </div>
+        </div>
+        <div>
+          <h2 id="reportHeadline" style="font-size:20px; margin-bottom:4px;">Exam Complete</h2>
+          <p id="reportSummary" style="font-size:13.5px; color:var(--text-secondary);"></p>
+          <div class="domain-bars" id="domainBars"></div>
+        </div>
+      </div>
+
+      <div class="review-controls">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-primary" data-filter="missed" id="fltMissed">Missed Only</button>
+          <button class="btn" data-filter="flagged" id="fltFlagged">Flagged Only</button>
+          <button class="btn" data-filter="all" id="fltAll">All 65 Questions</button>
+        </div>
+        <button class="btn" id="btnRetake">Retake Exam</button>
+      </div>
+      <div id="reviewList"></div>
+    </section>
+  </div>
+
+  <script src="exam-data.js"></script>
+  <script>
+    const DOMAIN_META = {
+      D1: { name: 'Domain 1: Cloud Concepts', weight: '24%' },
+      D2: { name: 'Domain 2: Security & Compliance', weight: '30%' },
+      D3: { name: 'Domain 3: Cloud Tech & Services', weight: '34%' },
+      D4: { name: 'Domain 4: Billing, Pricing & Support', weight: '12%' }
+    };
+    const HISTORY_KEY = 'aws_clf_c02_exam_history_v1';
+
+    const state = {
+      exam: null,
+      mode: 'timed', // 'timed' | 'study'
+      index: 0,
+      selections: {}, // qid -> Set(['A'])
+      flagged: new Set(),
+      checkedStudy: new Set(),
+      secondsLeft: 90 * 60,
+      timerHandle: null,
+      paused: false,
+      reviewFilter: 'missed'
+    };
+
+    function loadHistory() {
+      try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || {}; }
+      catch { return {}; }
+    }
+    function saveHistory(examId, record) {
+      const h = loadHistory();
+      if (!h[examId] || record.scaled > h[examId].scaled) h[examId] = record;
+      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch {}
+    }
+
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const clean = text.replace(/\*\*/g, '').replace(/`/g, '');
+      const u = new SpeechSynthesisUtterance(clean);
+      u.rate = 1.05;
+      window.speechSynthesis.speak(u);
+    }
+
+    function stopSpeech() {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    }
+
+    function formatClock(sec) {
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function renderLobby() {
+      stopSpeech();
+      clearInterval(state.timerHandle);
+      document.getElementById('lobbyView').style.display = 'block';
+      document.getElementById('examView').style.display = 'none';
+      document.getElementById('reportView').classList.remove('visible');
+      document.getElementById('btnBackLobby').style.display = 'none';
+
+      const diff = Math.max(0, Math.ceil((new Date('2026-12-02T09:00:00') - new Date()) / 86400000));
+      document.getElementById('lobbyCountdown').textContent = `${diff} days until Dec 2`;
+
+      const history = loadHistory();
+      const grid = document.getElementById('examCards');
+      grid.innerHTML = '';
+
+      Object.values(window.CLF_EXAMS || {}).forEach(exam => {
+        const best = history[exam.id];
+        const d3Count = exam.questions.filter(q => q.domain === 'D3').length;
+        const card = document.createElement('div');
+        card.className = 'exam-card';
+        card.innerHTML = `
+          <div>
+            <h2>${exam.title}</h2>
+            <p>${exam.subtitle}</p>
+            <div class="meta-row">
+              <span class="pill">${exam.questions.length} Questions</span>
+              <span class="pill">90 Min</span>
+              <span class="pill accent">Domain 3: ${d3Count} Qs</span>
+              ${best ? `<span class="pill ${best.scaled >= 700 ? 'pass' : ''}">Best: ${best.scaled}/1000 (${best.pct}%)</span>` : '<span class="pill">Not attempted yet</span>'}
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-primary" data-start="${exam.id}" data-mode="timed">Start Timed Exam (90m)</button>
+            <button class="btn" data-start="${exam.id}" data-mode="study">Start Study Mode (Instant Feedback)</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      grid.querySelectorAll('[data-start]').forEach(btn => {
+        btn.onclick = () => startExam(btn.dataset.start, btn.dataset.mode);
+      });
+    }
+
+    function startExam(examId, mode) {
+      state.exam = window.CLF_EXAMS[examId];
+      state.mode = mode;
+      state.index = 0;
+      state.selections = {};
+      state.flagged = new Set();
+      state.checkedStudy = new Set();
+      state.secondsLeft = state.exam.durationMinutes * 60;
+      state.paused = false;
+
+      document.getElementById('lobbyView').style.display = 'none';
+      document.getElementById('reportView').classList.remove('visible');
+      document.getElementById('examView').style.display = 'block';
+      document.getElementById('btnBackLobby').style.display = 'inline-flex';
+      document.getElementById('activeExamName').textContent = state.exam.title;
+      document.getElementById('activeModeLabel').textContent = mode === 'timed'
+        ? 'Timed Exam Mode (Scoring on Submit)'
+        : 'Study Mode (Instant Rationale + Audio)';
+      document.getElementById('btnPauseTimer').textContent = 'Pause';
+
+      startTimer();
+      renderQuestion();
+      renderNav();
+    }
+
+    function startTimer() {
+      clearInterval(state.timerHandle);
+      const disp = document.getElementById('timerDisplay');
+      disp.textContent = formatClock(state.secondsLeft);
+      disp.classList.toggle('urgent', state.secondsLeft <= 600);
+      state.timerHandle = setInterval(() => {
+        if (state.paused) return;
+        state.secondsLeft--;
+        disp.textContent = formatClock(Math.max(0, state.secondsLeft));
+        disp.classList.toggle('urgent', state.secondsLeft <= 600);
+        if (state.secondsLeft <= 0) {
+          clearInterval(state.timerHandle);
+          gradeExam();
+        }
+      }, 1000);
+    }
+
+    function isQuestionCorrect(q) {
+      const sel = Array.from(state.selections[q.id] || []).sort();
+      const ans = [...q.answers].sort();
+      return sel.length === ans.length && sel.every((v, i) => v === ans[i]);
+    }
+
+    function renderQuestion() {
+      stopSpeech();
+      const q = state.exam.questions[state.index];
+      const isMulti = q.answers.length > 1;
+      const sel = state.selections[q.id] || new Set();
+      const showStudy = state.mode === 'study' && state.checkedStudy.has(q.id);
+
+      document.getElementById('qCounter').textContent = `Question ${state.index + 1} of ${state.exam.questions.length}`;
+      document.getElementById('qDomainBadge').textContent = DOMAIN_META[q.domain].name;
+      document.getElementById('qTypeBadge').textContent = isMulti ? `Choose ${q.answers.length}` : 'Single Choice';
+      document.getElementById('qPrompt').innerHTML = q.prompt.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      const flagBtn = document.getElementById('btnFlag');
+      flagBtn.classList.toggle('flagged', state.flagged.has(q.id));
+      flagBtn.textContent = state.flagged.has(q.id) ? 'Flagged' : 'Flag for Review';
+
+      const list = document.getElementById('optionsList');
+      list.innerHTML = '';
+      q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        const chosen = sel.has(opt.key);
+        let cls = 'option-btn';
+        if (showStudy) {
+          if (q.answers.includes(opt.key)) cls += ' correct';
+          else if (chosen) cls += ' wrong';
+        } else if (chosen) {
+          cls += ' selected';
+        }
+        btn.className = cls;
+        btn.innerHTML = `<span class="opt-key">${opt.key}</span><span>${opt.text}</span>`;
+        btn.onclick = () => {
+          if (showStudy) return;
+          if (!state.selections[q.id]) state.selections[q.id] = new Set();
+          if (isMulti) {
+            if (state.selections[q.id].has(opt.key)) state.selections[q.id].delete(opt.key);
+            else if (state.selections[q.id].size < q.answers.length) state.selections[q.id].add(opt.key);
+          } else {
+            state.selections[q.id] = new Set([opt.key]);
+          }
+          renderQuestion();
+          renderNav();
+        };
+        list.appendChild(btn);
+      });
+
+      const checkBtn = document.getElementById('btnCheckStudy');
+      checkBtn.style.display = state.mode === 'study' && !showStudy ? 'inline-flex' : 'none';
+      checkBtn.disabled = sel.size < q.answers.length;
+
+      const ratBox = document.getElementById('studyRationale');
+      if (showStudy) {
+        const ok = isQuestionCorrect(q);
+        ratBox.classList.add('visible');
+        document.getElementById('studyVerdict').textContent = ok
+          ? `Correct (${q.answers.join(', ')})`
+          : `Incorrect — Correct Answer: ${q.answers.join(', ')}`;
+        document.getElementById('studyVerdict').style.color = ok ? 'var(--success-bright)' : 'var(--danger)';
+        document.getElementById('studyRationaleText').innerHTML = q.rationale.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      } else {
+        ratBox.classList.remove('visible');
+      }
+
+      document.getElementById('btnPrev').disabled = state.index === 0;
+      document.getElementById('btnNext').textContent = state.index === state.exam.questions.length - 1 ? 'Review / Finish' : 'Next Question';
+    }
+
+    function renderNav() {
+      const grid = document.getElementById('navGrid');
+      grid.innerHTML = '';
+      let answered = 0;
+      state.exam.questions.forEach((q, idx) => {
+        const hasAns = state.selections[q.id] && state.selections[q.id].size >= q.answers.length;
+        if (hasAns) answered++;
+        const cell = document.createElement('button');
+        cell.className = 'nav-cell'
+          + (idx === state.index ? ' current' : '')
+          + (hasAns ? ' answered' : '')
+          + (state.flagged.has(q.id) ? ' flagged' : '');
+        cell.textContent = idx + 1;
+        cell.onclick = () => { state.index = idx; renderQuestion(); renderNav(); };
+        grid.appendChild(cell);
+      });
+      document.getElementById('navAnsweredCount').textContent = answered;
+    }
+
+    function gradeExam() {
+      stopSpeech();
+      clearInterval(state.timerHandle);
+      const qs = state.exam.questions;
+      let totalCorrect = 0;
+      const domStats = { D1: { c: 0, t: 0 }, D2: { c: 0, t: 0 }, D3: { c: 0, t: 0 }, D4: { c: 0, t: 0 } };
+
+      qs.forEach(q => {
+        domStats[q.domain].t++;
+        if (isQuestionCorrect(q)) {
+          totalCorrect++;
+          domStats[q.domain].c++;
+        }
+      });
+
+      const pct = Math.round((totalCorrect / qs.length) * 100);
+      const scaled = Math.round(100 + (totalCorrect / qs.length) * 900);
+      const passed = scaled >= 700;
+      const elapsedSec = state.exam.durationMinutes * 60 - Math.max(0, state.secondsLeft);
+
+      saveHistory(state.exam.id, { scaled, pct, correct: totalCorrect, total: qs.length, date: new Date().toISOString() });
+
+      document.getElementById('examView').style.display = 'none';
+      document.getElementById('reportView').classList.add('visible');
+
+      const ring = document.getElementById('scoreRing');
+      const circ = 326.73;
+      ring.style.stroke = passed ? 'var(--success-bright)' : 'var(--danger)';
+      ring.style.strokeDashoffset = circ * (1 - scaled / 1000);
+
+      document.getElementById('scaledScoreVal').textContent = scaled;
+      document.getElementById('scaledScoreVal').style.color = passed ? 'var(--success-bright)' : 'var(--danger)';
+      document.getElementById('passStatusLabel').textContent = passed ? 'PASS (>= 700)' : 'BELOW 700';
+      document.getElementById('reportHeadline').textContent = `${state.exam.title} — ${passed ? 'Passing Score!' : 'Review Missed Traps'}`;
+      document.getElementById('reportSummary').textContent =
+        `Raw Score: ${totalCorrect} / ${qs.length} (${pct}%) • Time Used: ${formatClock(elapsedSec)} • Passing Threshold: 700 / 1000`;
+
+      const bars = document.getElementById('domainBars');
+      bars.innerHTML = '';
+      Object.entries(domStats).forEach(([dKey, st]) => {
+        const dpct = Math.round((st.c / st.t) * 100);
+        const color = dpct >= 80 ? 'var(--success-bright)' : dpct >= 70 ? 'var(--aws-orange)' : 'var(--danger)';
+        const row = document.createElement('div');
+        row.className = 'd-row';
+        row.innerHTML = `
+          <div class="d-row-top">
+            <span>${DOMAIN_META[dKey].name} (${DOMAIN_META[dKey].weight})</span>
+            <strong style="font-family:var(--font-mono); color:${color};">${st.c}/${st.t} (${dpct}%)</strong>
+          </div>
+          <div class="d-track"><div class="d-fill" style="width:${dpct}%; background:${color};"></div></div>
+        `;
+        bars.appendChild(row);
+      });
+
+      state.reviewFilter = 'missed';
+      renderReviewList();
+    }
+
+    function renderReviewList() {
+      ['fltMissed', 'fltFlagged', 'fltAll'].forEach(id => {
+        const b = document.getElementById(id);
+        b.classList.toggle('btn-primary', b.dataset.filter === state.reviewFilter);
+      });
+
+      const list = document.getElementById('reviewList');
+      list.innerHTML = '';
+      const filtered = state.exam.questions.filter(q => {
+        if (state.reviewFilter === 'missed') return !isQuestionCorrect(q);
+        if (state.reviewFilter === 'flagged') return state.flagged.has(q.id);
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<div class="review-card"><p style="color:var(--text-secondary);">No questions match this filter.</p></div>';
+        return;
+      }
+
+      filtered.forEach(q => {
+        const ok = isQuestionCorrect(q);
+        const userAns = Array.from(state.selections[q.id] || []).sort().join(', ') || 'Unanswered';
+        const card = document.createElement('div');
+        card.className = `review-card ${ok ? 'passed' : 'missed'}`;
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+            <span class="pill">${DOMAIN_META[q.domain].name} &middot; Q${q.id}</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span class="pill ${ok ? 'pass' : ''}" style="${ok ? '' : 'border-color:var(--danger); color:var(--danger);'}">Your Answer: ${userAns} | Correct: ${q.answers.join(', ')}</span>
+              <button class="btn" data-speak-q="${q.id}">Read Explanation</button>
+            </div>
+          </div>
+          <p style="font-weight:500; margin-bottom:8px;">${q.prompt.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>
+          <p style="font-size:13px; color:var(--text-secondary);">${q.rationale.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>
+        `;
+        list.appendChild(card);
+      });
+
+      list.querySelectorAll('[data-speak-q]').forEach(btn => {
+        btn.onclick = () => {
+          const q = state.exam.questions.find(x => x.id === Number(btn.dataset.speakQ));
+          speakText(`Question ${q.id}. Correct answer: ${q.answers.join(' and ')}. ${q.rationale}`);
+        };
+      });
+    }
+
+    // Event bindings
+    document.getElementById('btnBackLobby').onclick = renderLobby;
+    document.getElementById('btnPrev').onclick = () => { if (state.index > 0) { state.index--; renderQuestion(); renderNav(); } };
+    document.getElementById('btnNext').onclick = () => {
+      if (state.index < state.exam.questions.length - 1) { state.index++; renderQuestion(); renderNav(); }
+      else if (confirm('Submit and grade your exam now?')) gradeExam();
+    };
+    document.getElementById('btnFlag').onclick = () => {
+      const qid = state.exam.questions[state.index].id;
+      if (state.flagged.has(qid)) state.flagged.delete(qid);
+      else state.flagged.add(qid);
+      renderQuestion();
+      renderNav();
+    };
+    document.getElementById('btnNextFlagged').onclick = () => {
+      const qs = state.exam.questions;
+      for (let step = 1; step <= qs.length; step++) {
+        const i = (state.index + step) % qs.length;
+        if (state.flagged.has(qs[i].id)) { state.index = i; renderQuestion(); renderNav(); return; }
+      }
+      alert('No flagged questions.');
+    };
+    document.getElementById('btnCheckStudy').onclick = () => {
+      const q = state.exam.questions[state.index];
+      state.checkedStudy.add(q.id);
+      renderQuestion();
+    };
+    document.getElementById('btnReadQuestion').onclick = () => {
+      const q = state.exam.questions[state.index];
+      const opts = q.options.map(o => `${o.key}: ${o.text}`).join('. ');
+      speakText(`Question ${q.id}. ${q.prompt}. ${opts}`);
+    };
+    document.getElementById('btnReadRationale').onclick = () => {
+      const q = state.exam.questions[state.index];
+      speakText(`Correct answer: ${q.answers.join(' and ')}. ${q.rationale}`);
+    };
+    document.getElementById('btnPauseTimer').onclick = () => {
+      state.paused = !state.paused;
+      document.getElementById('btnPauseTimer').textContent = state.paused ? 'Resume' : 'Pause';
+    };
+    document.getElementById('btnSubmitExam').onclick = () => {
+      const answered = state.exam.questions.filter(q => state.selections[q.id] && state.selections[q.id].size >= q.answers.length).length;
+      if (answered < state.exam.questions.length) {
+        if (!confirm(`You have answered ${answered} of ${state.exam.questions.length} questions. Submit anyway?`)) return;
+      }
+      gradeExam();
+    };
+    ['fltMissed', 'fltFlagged', 'fltAll'].forEach(id => {
+      document.getElementById(id).onclick = (e) => { state.reviewFilter = e.target.dataset.filter; renderReviewList(); };
+    });
+    document.getElementById('btnRetake').onclick = () => startExam(state.exam.id, state.mode);
+
+    renderLobby();
+  </script>
+</body>
+</html>

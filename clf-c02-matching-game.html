@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AWS CLF-C02 Domain Matching Arena</title>
+  <title>AWS CLF-C02 Matching Arena, Leitner SRS &amp; Decision Trees</title>
   <style>
     :root {
       --bg-canvas: #0d1117;
@@ -40,387 +40,171 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    .app-shell {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px 20px 48px;
-    }
+    .app-shell { max-width: 1220px; margin: 0 auto; padding: 20px 20px 52px; }
 
     /* Header */
     .top-bar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding-bottom: 18px;
-      border-bottom: 1px solid var(--border-default);
-      margin-bottom: 18px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 14px; padding-bottom: 16px; border-bottom: 1px solid var(--border-default); margin-bottom: 16px;
     }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
+    .brand { display: flex; align-items: center; gap: 12px; }
     .brand-badge {
-      width: 38px;
-      height: 38px;
-      border-radius: var(--radius);
-      background: var(--aws-orange-dim);
-      border: 1px solid var(--aws-orange);
-      color: var(--aws-orange);
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-      font-family: var(--font-mono);
-      font-size: 13px;
+      width: 38px; height: 38px; border-radius: var(--radius);
+      background: var(--aws-orange-dim); border: 1px solid var(--aws-orange);
+      color: var(--aws-orange); display: grid; place-items: center;
+      font-weight: 700; font-family: var(--font-mono); font-size: 13px;
     }
+    .brand h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+    .brand p { font-size: 12.5px; color: var(--text-secondary); }
 
-    .brand h1 {
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-    }
-
-    .brand p {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
+    .header-right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .countdown-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-default);
-      font-size: 12px;
-      color: var(--text-secondary);
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 999px;
+      background: var(--bg-surface); border: 1px solid var(--border-default);
+      font-size: 12px; color: var(--text-secondary);
     }
+    .countdown-pill strong { color: var(--aws-orange); font-family: var(--font-mono); }
 
-    .countdown-pill strong {
-      color: var(--aws-orange);
-      font-family: var(--font-mono);
+    /* Mode Switcher */
+    .mode-bar {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 16px;
     }
+    .mode-pills { display: flex; gap: 6px; background: var(--bg-surface); padding: 4px; border-radius: var(--radius); border: 1px solid var(--border-default); }
+    .mode-btn {
+      background: transparent; border: none; color: var(--text-secondary);
+      padding: 7px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+    }
+    .mode-btn.active { background: var(--aws-orange); color: #0d1117; }
+
+    .audio-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
     /* Domain Tabs */
     .domain-tabs {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 10px;
-      margin-bottom: 18px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px; margin-bottom: 16px;
     }
-
     .tab-btn {
-      text-align: left;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius);
-      padding: 12px 14px;
-      color: var(--text-primary);
-      cursor: pointer;
-      transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
-      position: relative;
+      text-align: left; background: var(--bg-surface); border: 1px solid var(--border-default);
+      border-radius: var(--radius); padding: 11px 13px; color: var(--text-primary);
+      cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
     }
-
-    .tab-btn:hover {
-      background: var(--bg-elevated);
-      border-color: var(--border-strong);
-    }
-
-    .tab-btn.active {
-      background: var(--bg-elevated);
-      border-color: var(--aws-orange);
-      box-shadow: inset 0 0 0 1px var(--aws-orange);
-    }
-
-    .tab-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-      gap: 6px;
-    }
-
-    .tab-label {
-      font-size: 13px;
-      font-weight: 600;
-    }
-
+    .tab-btn:hover { background: var(--bg-elevated); border-color: var(--border-strong); }
+    .tab-btn.active { background: var(--bg-elevated); border-color: var(--aws-orange); box-shadow: inset 0 0 0 1px var(--aws-orange); }
+    .tab-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .tab-label { font-size: 13px; font-weight: 600; }
     .tab-weight {
-      font-size: 11px;
-      font-family: var(--font-mono);
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: var(--bg-canvas);
-      border: 1px solid var(--border-default);
-      color: var(--text-secondary);
+      font-size: 11px; font-family: var(--font-mono); padding: 2px 6px; border-radius: 4px;
+      background: var(--bg-canvas); border: 1px solid var(--border-default); color: var(--text-secondary);
     }
-
-    .tab-btn.active .tab-weight {
-      color: var(--aws-orange);
-      border-color: rgba(255, 153, 0, 0.4);
-    }
-
-    .tab-meta {
-      font-size: 11px;
-      color: var(--text-secondary);
-      display: flex;
-      justify-content: space-between;
-      margin-top: 6px;
-    }
-
-    .tab-progress-bar {
-      height: 3px;
-      background: var(--bg-canvas);
-      border-radius: 2px;
-      margin-top: 6px;
-      overflow: hidden;
-    }
-
-    .tab-progress-fill {
-      height: 100%;
-      background: var(--success-bright);
-      width: 0%;
-      transition: width 0.25s ease;
-    }
+    .tab-btn.active .tab-weight { color: var(--aws-orange); border-color: rgba(255, 153, 0, 0.4); }
+    .tab-meta { font-size: 11px; color: var(--text-secondary); display: flex; justify-content: space-between; margin-top: 4px; }
+    .tab-progress-bar { height: 3px; background: var(--bg-canvas); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+    .tab-progress-fill { height: 100%; background: var(--success-bright); width: 0%; transition: width 0.25s ease; }
 
     /* HUD */
     .hud-bar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius);
-      padding: 12px 16px;
-      margin-bottom: 16px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 14px; background: var(--bg-surface); border: 1px solid var(--border-default);
+      border-radius: var(--radius); padding: 12px 16px; margin-bottom: 14px;
+    }
+    .hud-left { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+
+    /* Radial Progress Ring SVG */
+    .mastery-ring { position: relative; width: 52px; height: 52px; flex-shrink: 0; }
+    .mastery-ring svg { transform: rotate(-90deg); width: 52px; height: 52px; }
+    .mastery-ring span {
+      position: absolute; inset: 0; display: grid; place-items: center;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--success-bright);
     }
 
-    .hud-stats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-
-    .stat {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-    }
-
-    .stat-val {
-      font-size: 16px;
-      font-weight: 600;
-      font-family: var(--font-mono);
-      color: var(--text-primary);
-    }
-
+    .hud-stats { display: flex; flex-wrap: wrap; gap: 18px; }
+    .stat { display: flex; flex-direction: column; }
+    .stat-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+    .stat-val { font-size: 15px; font-weight: 600; font-family: var(--font-mono); }
     .stat-val.good { color: var(--success-bright); }
     .stat-val.accent { color: var(--aws-orange); }
 
-    .hud-controls {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
+    .hud-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
     .btn {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-default);
-      color: var(--text-primary);
-      padding: 7px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--bg-elevated); border: 1px solid var(--border-default);
+      color: var(--text-primary); padding: 7px 12px; border-radius: 6px;
+      font-size: 12px; font-weight: 500; cursor: pointer; text-decoration: none;
       transition: background 0.15s ease, border-color 0.15s ease;
     }
+    .btn:hover:not(:disabled) { background: var(--bg-hover); border-color: var(--border-strong); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--aws-orange); border-color: var(--aws-orange); color: #0d1117; font-weight: 600; }
+    .btn-primary:hover:not(:disabled) { background: #ffad33; border-color: #ffad33; }
+    .btn.toggled { border-color: var(--accent-blue); background: var(--accent-blue-dim); color: #9ecbff; }
+    select.btn { padding-right: 22px; }
 
-    .btn:hover {
-      background: var(--bg-hover);
-      border-color: var(--border-strong);
+    /* Leitner Boxes Bar */
+    .leitner-strip {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 10px; background: var(--bg-surface); border: 1px solid var(--border-default);
+      border-radius: var(--radius); padding: 9px 14px; margin-bottom: 14px; font-size: 12px;
     }
-
-    .btn-primary {
-      background: var(--aws-orange);
-      border-color: var(--aws-orange);
-      color: #0d1117;
-      font-weight: 600;
+    .leitner-boxes { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .box-pill {
+      padding: 3px 9px; border-radius: 4px; font-family: var(--font-mono); font-size: 11.5px;
+      background: var(--bg-canvas); border: 1px solid var(--border-default);
     }
-
-    .btn-primary:hover {
-      background: #ffad33;
-      border-color: #ffad33;
-    }
-
-    .btn:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-
-    select.btn {
-      padding-right: 24px;
-    }
+    .box-pill.b1 { border-color: rgba(248, 81, 73, 0.55); color: #ff7b72; }
+    .box-pill.b2 { border-color: rgba(255, 153, 0, 0.55); color: var(--aws-orange); }
+    .box-pill.b3 { border-color: rgba(63, 185, 80, 0.55); color: var(--success-bright); }
 
     /* Feedback Banner */
     .feedback-banner {
-      min-height: 44px;
-      padding: 10px 14px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border-default);
-      background: var(--bg-surface);
-      margin-bottom: 16px;
-      font-size: 13px;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      transition: border-color 0.2s ease, background 0.2s ease;
+      min-height: 44px; padding: 10px 14px; border-radius: var(--radius);
+      border: 1px solid var(--border-default); background: var(--bg-surface);
+      margin-bottom: 16px; font-size: 13px; color: var(--text-secondary);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
     }
-
-    .feedback-banner.match {
-      border-color: var(--success);
-      background: var(--success-dim);
-      color: var(--text-primary);
-    }
-
-    .feedback-banner.mismatch {
-      border-color: var(--danger);
-      background: var(--danger-dim);
-      color: var(--text-primary);
-    }
-
-    .kbd-hint {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-      white-space: nowrap;
-    }
+    .feedback-banner.match { border-color: var(--success); background: var(--success-dim); color: var(--text-primary); }
+    .feedback-banner.mismatch { border-color: var(--danger); background: var(--danger-dim); color: var(--text-primary); }
+    .kbd-hint { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); white-space: nowrap; }
 
     /* Matching Board */
-    .board {
-      display: grid;
-      grid-template-columns: 1fr 1.35fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    @media (max-width: 780px) {
-      .board { grid-template-columns: 1fr; }
-      .kbd-hint { display: none; }
-    }
+    .board { display: grid; grid-template-columns: 1fr 1.35fr; gap: 18px; align-items: start; }
+    @media (max-width: 780px) { .board { grid-template-columns: 1fr; } .kbd-hint { display: none; } }
 
     .column-header {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-secondary);
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-secondary); margin-bottom: 10px; display: flex; justify-content: space-between;
     }
-
-    .card-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-    }
+    .card-stack { display: flex; flex-direction: column; gap: 9px; }
 
     .match-card {
-      width: 100%;
-      text-align: left;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius);
-      padding: 13px 14px;
-      color: var(--text-primary);
-      cursor: pointer;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      font-size: 13.5px;
+      width: 100%; text-align: left; background: var(--bg-surface);
+      border: 1px solid var(--border-default); border-radius: var(--radius);
+      padding: 12px 14px; color: var(--text-primary); cursor: pointer;
+      display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px;
       transition: border-color 0.14s ease, background 0.14s ease, transform 0.12s ease, opacity 0.2s ease;
     }
-
-    .match-card:hover:not(.matched) {
-      background: var(--bg-elevated);
-      border-color: var(--border-strong);
-      transform: translateY(-1px);
-    }
-
-    .match-card.selected {
-      background: var(--accent-blue-dim);
-      border-color: var(--accent-blue);
-      box-shadow: inset 0 0 0 1px var(--accent-blue);
-    }
-
-    .match-card.matched {
-      background: var(--success-dim);
-      border-color: rgba(46, 160, 67, 0.45);
-      color: var(--text-secondary);
-      cursor: default;
-      opacity: 0.62;
-    }
-
-    .match-card.mismatch {
-      background: var(--danger-dim);
-      border-color: var(--danger);
-      animation: shake 0.28s ease;
-    }
+    .match-card:hover:not(.matched) { background: var(--bg-elevated); border-color: var(--border-strong); transform: translateY(-1px); }
+    .match-card.selected { background: var(--accent-blue-dim); border-color: var(--accent-blue); box-shadow: inset 0 0 0 1px var(--accent-blue); }
+    .match-card.matched { background: var(--success-dim); border-color: rgba(46, 160, 67, 0.45); color: var(--text-secondary); cursor: default; opacity: 0.6; }
+    .match-card.mismatch { background: var(--danger-dim); border-color: var(--danger); animation: shake 0.28s ease; }
 
     .key-tag {
-      flex-shrink: 0;
-      min-width: 22px;
-      height: 22px;
-      border-radius: 4px;
-      background: var(--bg-canvas);
-      border: 1px solid var(--border-default);
-      color: var(--text-secondary);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 600;
-      display: grid;
-      place-items: center;
-      margin-top: 1px;
+      flex-shrink: 0; min-width: 22px; height: 22px; border-radius: 4px;
+      background: var(--bg-canvas); border: 1px solid var(--border-default);
+      color: var(--text-secondary); font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      display: grid; place-items: center; margin-top: 1px;
     }
-
-    .match-card.selected .key-tag {
-      background: var(--accent-blue);
-      border-color: var(--accent-blue);
-      color: #0d1117;
+    .match-card.selected .key-tag { background: var(--accent-blue); border-color: var(--accent-blue); color: #0d1117; }
+    .match-card.matched .key-tag { background: var(--success); border-color: var(--success); color: #fff; }
+    .box-dot {
+      margin-left: auto; font-family: var(--font-mono); font-size: 10px;
+      padding: 2px 5px; border-radius: 4px; background: var(--bg-canvas);
+      border: 1px solid var(--border-default); color: var(--text-muted); flex-shrink: 0;
     }
-
-    .match-card.matched .key-tag {
-      background: var(--success);
-      border-color: var(--success);
-      color: #ffffff;
-    }
-
-    .term-text {
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .def-text {
-      font-weight: 400;
-      font-size: 13px;
-      color: #d0d7de;
-    }
+    .term-text { font-weight: 600; font-size: 13.5px; }
+    .def-text { font-weight: 400; font-size: 13px; color: #d0d7de; }
 
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
@@ -428,57 +212,64 @@
       75% { transform: translateX(5px); }
     }
 
-    /* Round Complete Overlay Card */
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 153, 0, 0.55); }
+      50% { box-shadow: 0 0 0 6px rgba(255, 153, 0, 0); }
+    }
+
+    /* Summary Panel */
     .summary-panel {
-      display: none;
-      margin-top: 18px;
-      background: var(--bg-surface);
-      border: 1px solid var(--success);
-      border-radius: var(--radius);
-      padding: 20px;
+      display: none; margin-top: 18px; background: var(--bg-surface);
+      border: 1px solid var(--success); border-radius: var(--radius); padding: 20px;
     }
-
     .summary-panel.visible { display: block; }
+    .summary-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .summary-header h2 { font-size: 17px; color: var(--success-bright); }
+    .missed-list { margin-top: 12px; border-top: 1px solid var(--border-default); padding-top: 12px; }
+    .missed-list h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--aws-orange); margin-bottom: 8px; }
+    .missed-item { padding: 8px 10px; border-radius: 6px; background: var(--bg-canvas); border: 1px solid var(--border-default); margin-bottom: 6px; font-size: 13px; }
 
-    .summary-header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
+    /* Hands-Free Audio Blitz Panel */
+    .audio-blitz-panel {
+      display: none; background: var(--bg-surface); border: 1px solid var(--accent-blue);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
     }
+    .audio-blitz-panel.visible { display: block; }
 
-    .summary-header h2 {
-      font-size: 17px;
-      color: var(--success-bright);
+    /* Decision Trees View */
+    .trees-view { display: none; }
+    .trees-view.visible { display: block; }
+    .tree-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .tree-stage {
+      background: var(--bg-surface); border: 1px solid var(--border-default);
+      border-radius: var(--radius); padding: 22px;
     }
-
-    .missed-list {
-      margin-top: 12px;
-      border-top: 1px solid var(--border-default);
-      padding-top: 12px;
+    .tree-trail {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-default);
+      font-size: 12px; color: var(--text-secondary);
     }
-
-    .missed-list h3 {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--aws-orange);
-      margin-bottom: 8px;
+    .trail-chip {
+      padding: 4px 10px; border-radius: 999px; background: var(--bg-canvas);
+      border: 1px solid var(--border-default); color: var(--text-primary);
     }
-
-    .missed-item {
-      padding: 8px 10px;
-      border-radius: 6px;
-      background: var(--bg-canvas);
-      border: 1px solid var(--border-default);
-      margin-bottom: 6px;
-      font-size: 13px;
+    .tree-node {
+      background: var(--bg-canvas); border: 1px solid var(--aws-orange);
+      border-radius: var(--radius); padding: 18px; margin-bottom: 16px;
+      animation: pulse-glow 2s infinite;
     }
-
-    .missed-item strong { color: var(--text-primary); }
-    .missed-item span { color: var(--text-secondary); }
+    .tree-node.leaf { border-color: var(--success-bright); background: var(--success-dim); animation: none; }
+    .tree-node h2 { font-size: 17px; margin-bottom: 6px; }
+    .tree-node p { font-size: 13.5px; color: #d0d7de; }
+    .tree-branches { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+    .branch-btn {
+      text-align: left; background: var(--bg-elevated); border: 1px solid var(--border-default);
+      border-radius: var(--radius); padding: 14px; color: var(--text-primary); cursor: pointer;
+      transition: border-color 0.15s ease, transform 0.12s ease;
+    }
+    .branch-btn:hover { border-color: var(--aws-orange); transform: translateY(-1px); }
+    .branch-btn strong { display: block; font-size: 13.5px; margin-bottom: 3px; color: var(--aws-orange); }
+    .branch-btn span { font-size: 12px; color: var(--text-secondary); }
   </style>
 </head>
 <body>
@@ -487,86 +278,138 @@
       <div class="brand">
         <div class="brand-badge">CLF</div>
         <div>
-          <h1>AWS CLF-C02 Domain Matching Arena</h1>
-          <p>Match each AWS service or concept to its exact exam trigger</p>
+          <h1>AWS CLF-C02 Matching Arena &amp; Decision Trees</h1>
+          <p>Leitner spaced-repetition, Web Speech audio narration, and visual service trees</p>
         </div>
       </div>
-      <div class="countdown-pill">
-        Exam Target: <strong>Dec 2, 2026</strong> (<span id="daysLeft">8</span> days left)
+      <div class="header-right">
+        <div class="countdown-pill">Exam: <strong>Dec 2</strong> (<span id="daysLeft">7</span>d left)</div>
+        <a href="clf-c02-exam-simulator.html" class="btn btn-primary">Open 90-Min Exam Simulator</a>
       </div>
     </header>
 
-    <nav class="domain-tabs" id="domainTabs" aria-label="CLF-C02 Domains"></nav>
-
-    <section class="hud-bar">
-      <div class="hud-stats">
-        <div class="stat">
-          <span class="stat-label">Round</span>
-          <span class="stat-val accent" id="hudRound">1 / 2</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">Matched</span>
-          <span class="stat-val good" id="hudMatched">0 / 8</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">Accuracy</span>
-          <span class="stat-val" id="hudAccuracy">100%</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">Streak</span>
-          <span class="stat-val" id="hudStreak">0</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">Timer</span>
-          <span class="stat-val" id="hudTimer">00:00</span>
-        </div>
+    <div class="mode-bar">
+      <div class="mode-pills">
+        <button class="mode-btn active" id="modeMatching">Matching Arena (Leitner SRS)</button>
+        <button class="mode-btn" id="modeTrees">Visual Decision Trees</button>
       </div>
-      <div class="hud-controls">
-        <select id="roundSizeSelect" class="btn" title="Pairs per round">
-          <option value="6">6 pairs / round</option>
-          <option value="8" selected>8 pairs / round</option>
-          <option value="10">10 pairs / round</option>
+      <div class="audio-bar">
+        <button class="btn" id="btnToggleVoice">Auto-Narrate: OFF</button>
+        <select id="voiceRate" class="btn" title="Speech narration speed">
+          <option value="0.9">0.9x Speed</option>
+          <option value="1.05" selected>1.05x Speed</option>
+          <option value="1.25">1.25x Speed</option>
+          <option value="1.45">1.45x Speed</option>
         </select>
-        <button class="btn" id="btnRetryMissed" disabled>Drill Missed (0)</button>
-        <button class="btn" id="btnShuffle">Reshuffle (R)</button>
-        <button class="btn btn-primary" id="btnNextRound" disabled>Next Round</button>
+        <button class="btn" id="btnHandsFree">Hands-Free Audio Blitz</button>
+        <button class="btn" id="btnStopVoice">Stop Audio</button>
       </div>
-    </section>
-
-    <div class="feedback-banner" id="feedbackBanner">
-      <span id="feedbackText">Select a term on the left, then its matching AWS exam trigger on the right.</span>
-      <span class="kbd-hint">Keys: 1-8 (Left) &middot; A-H (Right) &middot; R (Shuffle)</span>
     </div>
 
-    <main class="board">
-      <div>
-        <div class="column-header">
-          <span>AWS Service / Concept</span>
-          <span id="leftCount"></span>
-        </div>
-        <div class="card-stack" id="leftColumn"></div>
-      </div>
-      <div>
-        <div class="column-header">
-          <span>Exam Use Case / Trigger</span>
-          <span id="rightCount"></span>
-        </div>
-        <div class="card-stack" id="rightColumn"></div>
-      </div>
-    </main>
-
-    <section class="summary-panel" id="summaryPanel">
-      <div class="summary-header">
-        <h2 id="summaryTitle">Round Complete</h2>
+    <!-- HANDS-FREE AUDIO BLITZ -->
+    <section class="audio-blitz-panel" id="audioBlitzPanel">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+        <strong style="color:var(--accent-blue); font-size:14px;">Hands-Free Audio Blitz (Reads Term -> 3s Pause -> Answer &amp; Tip)</strong>
         <div style="display:flex; gap:8px;">
-          <button class="btn" id="btnSummaryRetryMissed" style="display:none;">Drill Missed Pairs</button>
-          <button class="btn btn-primary" id="btnSummaryNext">Continue</button>
+          <button class="btn" id="btnBlitzSkip">Next Card</button>
+          <button class="btn" id="btnBlitzClose">Stop Blitz</button>
         </div>
       </div>
-      <p id="summaryStats" style="font-size:13px; color:var(--text-secondary);"></p>
-      <div class="missed-list" id="missedListContainer" style="display:none;">
-        <h3>Review Your Misses Before Moving On</h3>
-        <div id="missedList"></div>
+      <div id="blitzTerm" style="font-size:18px; font-weight:600; margin-bottom:6px;">Ready...</div>
+      <div id="blitzDef" style="font-size:13.5px; color:var(--text-secondary);">Starting spoken review of Box 1 &amp; Box 2 terms in the active deck.</div>
+    </section>
+
+    <!-- MATCHING ARENA VIEW -->
+    <div id="matchingView">
+      <nav class="domain-tabs" id="domainTabs" aria-label="CLF-C02 Domains"></nav>
+
+      <div class="leitner-strip">
+        <div class="leitner-boxes">
+          <strong style="color:var(--text-secondary);">Leitner SRS:</strong>
+          <span class="box-pill b1" id="box1Count">Box 1 (Learning/Missed): 0</span>
+          <span class="box-pill b2" id="box2Count">Box 2 (Reviewing): 0</span>
+          <span class="box-pill b3" id="box3Count">Box 3 (Mastered): 0</span>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn" id="btnLeitnerDue">Focus Box 1-2 Only: OFF</button>
+          <button class="btn" id="btnResetLeitner">Reset Deck SRS</button>
+        </div>
+      </div>
+
+      <section class="hud-bar">
+        <div class="hud-left">
+          <div class="mastery-ring" title="Box 3 Mastery % for active deck">
+            <svg viewBox="0 0 52 52">
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#212834" stroke-width="4.5" />
+              <circle id="masteryRingFill" cx="26" cy="26" r="22" fill="none" stroke="#3fb950" stroke-width="4.5"
+                stroke-dasharray="138.23" stroke-dashoffset="138.23" stroke-linecap="round" />
+            </svg>
+            <span id="masteryRingPct">0%</span>
+          </div>
+          <div class="hud-stats">
+            <div class="stat"><span class="stat-label">Round</span><span class="stat-val accent" id="hudRound">1 / 4</span></div>
+            <div class="stat"><span class="stat-label">Matched</span><span class="stat-val good" id="hudMatched">0 / 8</span></div>
+            <div class="stat"><span class="stat-label">Accuracy</span><span class="stat-val" id="hudAccuracy">100%</span></div>
+            <div class="stat"><span class="stat-label">Streak</span><span class="stat-val" id="hudStreak">0</span></div>
+            <div class="stat"><span class="stat-label">Timer</span><span class="stat-val" id="hudTimer">00:00</span></div>
+          </div>
+        </div>
+        <div class="hud-controls">
+          <select id="roundSizeSelect" class="btn" title="Pairs per round">
+            <option value="6">6 pairs / round</option>
+            <option value="8" selected>8 pairs / round</option>
+            <option value="10">10 pairs / round</option>
+          </select>
+          <button class="btn" id="btnRetryMissed" disabled>Drill Missed (0)</button>
+          <button class="btn" id="btnShuffle">Reshuffle (R)</button>
+          <button class="btn btn-primary" id="btnNextRound" disabled>Next Round</button>
+        </div>
+      </section>
+
+      <div class="feedback-banner" id="feedbackBanner">
+        <span id="feedbackText">Select a term on the left, then its matching AWS exam trigger on the right. Missed pairs auto-requeue in Box 1.</span>
+        <span class="kbd-hint">Keys: 1-8 (Left) &middot; A-H (Right) &middot; R (Shuffle)</span>
+      </div>
+
+      <main class="board">
+        <div>
+          <div class="column-header"><span>AWS Service / Concept</span><span id="leftCount"></span></div>
+          <div class="card-stack" id="leftColumn"></div>
+        </div>
+        <div>
+          <div class="column-header"><span>Exam Use Case / Trigger</span><span id="rightCount"></span></div>
+          <div class="card-stack" id="rightColumn"></div>
+        </div>
+      </main>
+
+      <section class="summary-panel" id="summaryPanel">
+        <div class="summary-header">
+          <h2 id="summaryTitle">Round Complete</h2>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" id="btnSummaryRetryMissed" style="display:none;">Drill Missed Pairs</button>
+            <button class="btn btn-primary" id="btnSummaryNext">Continue</button>
+          </div>
+        </div>
+        <p id="summaryStats" style="font-size:13px; color:var(--text-secondary);"></p>
+        <div class="missed-list" id="missedListContainer" style="display:none;">
+          <h3>Auto-Requeued to Box 1 — Review Before Continuing</h3>
+          <div id="missedList"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- VISUAL DECISION TREES VIEW -->
+    <section class="trees-view" id="treesView">
+      <div class="tree-tabs" id="treeTabs"></div>
+      <div class="tree-stage">
+        <div class="tree-trail" id="treeTrail"></div>
+        <div class="tree-node" id="treeNodeBox"></div>
+        <div class="tree-branches" id="treeBranches"></div>
+        <div style="display:flex; gap:8px; margin-top:16px; padding-top:14px; border-top:1px solid var(--border-default);">
+          <button class="btn" id="btnTreeBack">Step Back</button>
+          <button class="btn" id="btnTreeReset">Restart Tree</button>
+          <button class="btn btn-primary" id="btnTreeSpeak">Read Node Aloud</button>
+        </div>
       </div>
     </section>
   </div>
@@ -574,51 +417,47 @@
   <script>
     const DECKS = {
       d1: {
-        id: 'd1',
-        name: 'Domain 1: Cloud Concepts',
-        weight: '24%',
+        id: 'd1', name: 'Domain 1: Cloud Concepts', weight: '24%',
         pairs: [
           { term: 'Stop Guessing Capacity', def: 'Scale compute up/down on demand instead of buying idle servers ahead of holiday spikes', tip: 'Avoids over-provisioning and under-provisioning.' },
           { term: 'Trade Fixed for Variable Expense', def: 'Pay only for compute and storage consumed (OpEx) instead of upfront hardware CapEx', tip: 'Consumption-based pricing model.' },
           { term: 'Massive Economies of Scale', def: 'AWS aggregates usage from millions of customers to lower pay-as-you-go prices for everyone', tip: 'Volume-driven price reductions across AWS.' },
           { term: 'Operational Excellence Pillar', def: 'Operations as code, frequent small reversible changes, game days, and learning from failures', tip: 'Focuses on processes, runbooks, and automation.' },
-          { term: 'Reliability Pillar', def: 'Automatically recover from failure, scale horizontally across Multi-AZ, and test recovery', tip: 'Focuses on architecture surviving & recovering from outages.' },
-          { term: 'Performance Efficiency Pillar', def: 'Democratize advanced technologies, use serverless architectures, and go global in minutes', tip: 'Selecting the right resource types & sizes for workload speed.' },
+          { term: 'Reliability Pillar', def: 'Automatically recover from failure, scale horizontally across Multi-AZ, and test recovery', tip: 'Focuses on architecture surviving and recovering from outages.' },
+          { term: 'Performance Efficiency Pillar', def: 'Democratize advanced technologies, use serverless architectures, and go global in minutes', tip: 'Selecting the right resource types and sizes for workload speed.' },
           { term: 'Cost Optimization Pillar', def: 'Cloud Financial Management, consumption model, attribute spend, and use managed services', tip: 'Delivering business value at the lowest price point.' },
           { term: 'Sustainability Pillar', def: 'Reduce carbon footprint using energy-efficient AWS Graviton CPUs and maximizing utilization', tip: 'Minimizing environmental impact of cloud workloads.' },
-          { term: 'Security Pillar', def: 'Strong identity foundation (least privilege), traceability, and encrypt data in transit & at rest', tip: 'Protecting data, systems, and assets at every layer.' },
-          { term: 'AWS CAF: Business Perspective', def: 'Align cloud investments with digital transformation strategy and measurable business outcomes', tip: 'Business capabilities = Business, People, Governance.' },
+          { term: 'Security Pillar', def: 'Strong identity foundation (least privilege), traceability, and encrypt data in transit and at rest', tip: 'Protecting data, systems, and assets at every layer.' },
+          { term: 'AWS CAF: Business Perspective', def: 'Align cloud investments with digital transformation strategy and measurable business outcomes', tip: 'Business capabilities are Business, People, and Governance.' },
           { term: 'AWS CAF: People Perspective', def: 'Workforce readiness, cloud skills training, culture, and organizational change management', tip: 'Focuses on teams and skills.' },
-          { term: 'Rehost ("Lift and Shift")', def: 'Fastest migration strategy moving applications to AWS as-is with minimal changes', tip: 'Often uses AWS Application Migration Service (MGN).' },
-          { term: 'Replatform ("Lift, Tinker & Shift")', def: 'Move to managed cloud services (e.g., self-managed DB to Amazon RDS) without rewriting app code', tip: 'Targeted cloud optimization without refactoring.' },
-          { term: 'Repurchase ("Drop and Shop")', def: 'Replace legacy on-premises software by subscribing to a third-party SaaS product', tip: 'E.g., moving an old CRM to Salesforce or AWS Marketplace SaaS.' },
-          { term: 'AWS SCT + AWS DMS', def: 'Convert database schema between different engines (Oracle to PostgreSQL) and migrate data', tip: 'Heterogeneous DB migration always pairs SCT + DMS.' },
+          { term: 'Rehost ("Lift and Shift")', def: 'Fastest migration strategy moving applications to AWS as-is with minimal changes', tip: 'Often uses AWS Application Migration Service.' },
+          { term: 'Replatform ("Lift, Tinker & Shift")', def: 'Move to managed cloud services (self-managed DB to Amazon RDS) without rewriting app code', tip: 'Targeted cloud optimization without refactoring.' },
+          { term: 'Repurchase ("Drop and Shop")', def: 'Replace legacy on-premises software by subscribing to a third-party SaaS product', tip: 'Moving an old CRM to Salesforce or AWS Marketplace SaaS.' },
+          { term: 'AWS SCT + AWS DMS', def: 'Convert database schema between different engines (Oracle to PostgreSQL) and migrate data', tip: 'Heterogeneous DB migration always pairs SCT with DMS.' },
           { term: 'Rightsizing (Compute Optimizer)', def: 'Analyze historical utilization to downsize over-provisioned EC2 instances to optimal types', tip: 'AWS Compute Optimizer uses ML for rightsizing recommendations.' },
-          { term: 'AWS Snowball Edge', def: 'Ruggedized physical device for offline bulk transfer (80 TB) when internet bandwidth is slow', tip: 'Part of the AWS Snow Family for edge & offline migration.' },
+          { term: 'AWS Snowball Edge', def: 'Ruggedized physical device for offline bulk transfer (80 TB) when internet bandwidth is slow', tip: 'Part of the AWS Snow Family for edge and offline migration.' },
           { term: 'AWS CloudFormation', def: 'Provision repeatable, identical AWS environments automatically using JSON/YAML templates (IaC)', tip: 'Native AWS Infrastructure as Code service.' }
         ]
       },
       d2: {
-        id: 'd2',
-        name: 'Domain 2: Security & Compliance',
-        weight: '30%',
+        id: 'd2', name: 'Domain 2: Security & Compliance', weight: '30%',
         pairs: [
           { term: 'Shared Responsibility: AWS', def: 'Security OF the Cloud: physical data centers, hardware, global network, and hypervisor layer', tip: 'AWS never accesses or patches your EC2 guest OS.' },
-          { term: 'Shared Responsibility: Customer', def: 'Security IN the Cloud: customer data, IAM, Security Groups, encryption, and EC2 guest OS patches', tip: 'On RDS, OS & DB engine patching shifts to AWS.' },
+          { term: 'Shared Responsibility: Customer', def: 'Security IN the Cloud: customer data, IAM, Security Groups, encryption, and EC2 guest OS patches', tip: 'On RDS, OS and DB engine patching shifts to AWS.' },
           { term: 'Shared Controls (Both)', def: 'Patch Management, Configuration Management, and Awareness & Training', tip: 'Both AWS and the customer perform these at their respective layers.' },
-          { term: 'AWS Artifact', def: 'Self-service portal to download AWS compliance reports (SOC, ISO, PCI) and accept HIPAA BAAs', tip: 'Think Artifact = audit paperwork & legal agreements.' },
+          { term: 'AWS Artifact', def: 'Self-service portal to download AWS compliance reports (SOC, ISO, PCI) and accept HIPAA BAAs', tip: 'Think Artifact equals audit paperwork and legal agreements.' },
           { term: 'AWS CloudTrail', def: 'Audits WHO did WHAT by logging every AWS API call and Management Console sign-in event', tip: 'CloudTrail leaves a paper trail for auditors.' },
           { term: 'AWS Config', def: 'Continuously records resource configuration history and evaluates changes against compliance rules', tip: 'Tells you WHAT a resource configuration looked like over time.' },
-          { term: 'AWS Audit Manager', def: 'Continuously collects automated evidence to simplify ongoing risk and compliance audits', tip: 'Maps AWS usage to compliance frameworks like HIPAA/PCI.' },
+          { term: 'AWS Audit Manager', def: 'Continuously collects automated evidence to simplify ongoing risk and compliance audits', tip: 'Maps AWS usage to compliance frameworks like HIPAA and PCI.' },
           { term: 'Amazon GuardDuty', def: 'Intelligent ML threat detection analyzing CloudTrail, VPC Flow Logs, and DNS logs for attacks', tip: 'Spots compromised EC2s, crypto mining, and unusual API activity.' },
-          { term: 'Amazon Inspector', def: 'Automated vulnerability scanner checking EC2, Lambda, and ECR images for software CVEs', tip: 'Think Inspector = inspects code/packages for CVEs.' },
-          { term: 'Amazon Macie', def: 'Uses machine learning to automatically discover sensitive data and PII stored in Amazon S3', tip: 'Macie is strictly for S3 PII/sensitive data discovery.' },
+          { term: 'Amazon Inspector', def: 'Automated vulnerability scanner checking EC2, Lambda, and ECR images for software CVEs', tip: 'Inspector inspects code and packages for CVEs.' },
+          { term: 'Amazon Macie', def: 'Uses machine learning to automatically discover sensitive data and PII stored in Amazon S3', tip: 'Macie is strictly for S3 PII discovery.' },
           { term: 'AWS Security Hub', def: 'Central single-pane-of-glass dashboard aggregating findings from GuardDuty, Inspector, and Macie', tip: 'Unified security posture across accounts.' },
-          { term: 'AWS Shield Standard', def: 'Free, always-on automatic Layer 3 & Layer 4 DDoS protection included for all AWS customers', tip: 'Shield Advanced adds 24/7 SRT & DDoS cost protection.' },
+          { term: 'AWS Shield Standard', def: 'Free, always-on automatic Layer 3 & Layer 4 DDoS protection included for all AWS customers', tip: 'Shield Advanced adds 24/7 SRT and DDoS cost protection.' },
           { term: 'AWS WAF', def: 'Layer 7 Web Application Firewall blocking SQL injection, XSS, and malicious HTTP requests', tip: 'Attaches to CloudFront, ALB, and API Gateway.' },
           { term: 'Security Group vs. NACL', def: 'SG = Instance-level, stateful, allow-only | NACL = Subnet-level, stateless, allow & deny rules', tip: 'Use a NACL to explicitly block a specific bad IP.' },
-          { term: 'Amazon Cognito', def: 'Authentication & user sign-up for millions of external web/mobile app end-users (social logins)', tip: 'Cognito = Customers / App End-Users.' },
-          { term: 'AWS IAM Identity Center', def: 'Centralized workforce SSO for internal employees signing into multiple AWS Organizations accounts', tip: 'IAM Identity Center = Employees / Workforce.' },
+          { term: 'Amazon Cognito', def: 'Authentication & user sign-up for millions of external web/mobile app end-users (social logins)', tip: 'Cognito equals Customers and App End-Users.' },
+          { term: 'AWS IAM Identity Center', def: 'Centralized workforce SSO for internal employees signing into multiple AWS Organizations accounts', tip: 'IAM Identity Center equals Employees and Workforce.' },
           { term: 'AWS Secrets Manager', def: 'Securely stores database credentials and API keys with built-in automatic secret rotation', tip: 'Avoid hardcoding DB passwords in app code.' },
           { term: 'AWS CloudHSM vs. KMS', def: 'CloudHSM = Dedicated single-tenant HSM hardware (FIPS 140-2 L3) | KMS = Managed multi-tenant keys', tip: 'Single-tenant exclusive key control always means CloudHSM.' },
           { term: 'AWS Certificate Manager (ACM)', def: 'Provisions, manages, and automatically renews SSL/TLS certificates for HTTPS encryption in transit', tip: 'Public SSL/TLS certs via ACM are free.' },
@@ -626,102 +465,300 @@
         ]
       },
       d3: {
-        id: 'd3',
-        name: 'Domain 3: Cloud Tech & Services',
-        weight: '34%',
+        id: 'd3', name: 'Domain 3: Cloud Tech & Services', weight: '34%',
         pairs: [
-          { term: 'AWS Outposts', def: 'Physical AWS-managed hardware racks installed directly inside your own on-premises data center', tip: 'Your building = Outposts.' },
-          { term: 'AWS Local Zones', def: 'AWS facilities placed in major metro areas (not your building) for single-digit ms latency', tip: 'Metro city proximity = Local Zones.' },
-          { term: 'AWS Wavelength', def: 'Embeds AWS compute and storage directly inside 5G mobile telecom carrier networks', tip: '5G carrier edge = Wavelength.' },
-          { term: 'AWS Fargate', def: 'Serverless compute engine for running Docker containers on Amazon ECS or EKS with no EC2 servers', tip: 'Serverless containers = Fargate; Serverless functions = Lambda.' },
-          { term: 'AWS Elastic Beanstalk', def: 'PaaS where you upload web app code and AWS handles EC2, ELB, and Auto Scaling automatically', tip: 'Just upload code (Python/Java/Node) while keeping EC2 access.' },
-          { term: 'Amazon S3 Intelligent-Tiering', def: 'Automatically moves S3 objects across tiers for unpredictable access patterns with zero retrieval fees', tip: 'Unknown or changing access patterns = Intelligent-Tiering.' },
+          { term: 'AWS Outposts', def: 'Physical AWS-managed hardware racks installed directly inside your own on-premises data center', tip: 'Your building equals Outposts.' },
+          { term: 'AWS Local Zones', def: 'AWS facilities placed in major metro areas (not your building) for single-digit ms latency', tip: 'Metro city proximity equals Local Zones.' },
+          { term: 'AWS Wavelength', def: 'Embeds AWS compute and storage directly inside 5G mobile telecom carrier networks', tip: '5G carrier edge equals Wavelength.' },
+          { term: 'AWS Fargate', def: 'Serverless compute engine for running Docker containers on Amazon ECS or EKS with no EC2 servers', tip: 'Serverless containers equals Fargate; Serverless functions equals Lambda.' },
+          { term: 'AWS Elastic Beanstalk', def: 'PaaS where you upload web app code and AWS handles EC2, ELB, and Auto Scaling automatically', tip: 'Just upload code while keeping EC2 access.' },
+          { term: 'Amazon S3 Intelligent-Tiering', def: 'Automatically moves S3 objects across tiers for unpredictable access patterns with zero retrieval fees', tip: 'Unknown or changing access patterns equals Intelligent-Tiering.' },
           { term: 'S3 Glacier Deep Archive', def: 'Absolute lowest-cost S3 archival tier for 7-10 year compliance with 12-48 hour retrieval', tip: 'Cheapest storage in AWS.' },
-          { term: 'EC2 Instance Store', def: 'Ephemeral (temporary) physically attached block storage — data is permanently lost on stop/terminate', tip: 'Scratch/cache only; persistent block storage is EBS.' },
-          { term: 'Amazon EBS', def: 'Persistent network-attached block storage volume for a single EC2 instance within one AZ', tip: 'Data survives EC2 stop/start; snapshots go to S3.' },
-          { term: 'Amazon EFS', def: 'Serverless, elastic Linux NFS shared file system mounted simultaneously across multiple AZs', tip: 'Linux multi-AZ file share = EFS; Windows SMB = FSx.' },
-          { term: 'AWS Storage Gateway', def: 'Hybrid bridge giving on-premises apps low-latency local cached access to cloud storage (S3/Glacier)', tip: 'On-prem cached cloud storage = Storage Gateway.' },
+          { term: 'EC2 Instance Store', def: 'Ephemeral (temporary) physically attached block storage — data is permanently lost on stop/terminate', tip: 'Scratch or cache only; persistent block storage is EBS.' },
+          { term: 'Amazon EBS', def: 'Persistent network-attached block storage volume for a single EC2 instance within one AZ', tip: 'Data survives EC2 stop and start; snapshots go to S3.' },
+          { term: 'Amazon EFS', def: 'Serverless, elastic Linux NFS shared file system mounted simultaneously across multiple AZs', tip: 'Linux multi-AZ file share equals EFS; Windows SMB equals FSx.' },
+          { term: 'AWS Storage Gateway', def: 'Hybrid bridge giving on-premises apps low-latency local cached access to cloud storage (S3/Glacier)', tip: 'On-prem cached cloud storage equals Storage Gateway.' },
           { term: 'Amazon Aurora', def: 'Cloud-native MySQL/PostgreSQL relational DB with 5x MySQL throughput and 6 copies across 3 AZs', tip: 'Auto-scales storage up to 128 TB.' },
-          { term: 'Amazon DynamoDB', def: 'Fully managed serverless NoSQL key-value/document DB with single-digit millisecond latency', tip: 'Key-value/document at any scale.' },
-          { term: 'Amazon Neptune', def: 'Fully managed graph database for social networks, fraud detection, and complex relationships', tip: 'Connected relationships/fraud = Neptune.' },
+          { term: 'Amazon DynamoDB', def: 'Fully managed serverless NoSQL key-value/document DB with single-digit millisecond latency', tip: 'Key-value and document NoSQL at any scale.' },
+          { term: 'Amazon Neptune', def: 'Fully managed graph database for social networks, fraud detection, and complex relationships', tip: 'Connected relationships and fraud equals Neptune.' },
           { term: 'Amazon Athena', def: 'Serverless interactive SQL queries executed directly against files stored in Amazon S3', tip: 'No servers, no loading data — pay per TB scanned.' },
-          { term: 'Amazon Redshift', def: 'Petabyte-scale cloud data warehouse (OLAP) for complex business intelligence SQL analytics', tip: 'Data warehouse = Redshift; ad-hoc S3 SQL = Athena.' },
+          { term: 'Amazon Redshift', def: 'Petabyte-scale cloud data warehouse (OLAP) for complex business intelligence SQL analytics', tip: 'Data warehouse equals Redshift; ad-hoc S3 SQL equals Athena.' },
           { term: 'AWS Glue', def: 'Serverless ETL (Extract, Transform, Load) service and centralized Data Catalog', tip: 'Prepares and transforms data for analytics.' },
-          { term: 'Amazon Kinesis', def: 'Ingests and analyzes real-time streaming data (IoT telemetry, GPS, clickstreams) continuously', tip: 'Real-time streaming = Kinesis.' },
-          { term: 'Amazon Textract', def: 'Extracts printed text, handwriting, and key-value tables from scanned PDF documents/forms', tip: 'Ex-TRACT text from scanned documents.' },
-          { term: 'Amazon Polly', def: 'Converts written text into lifelike spoken audio (Text-to-Speech)', tip: '"Polly wants a cracker!" = talking parrot = Text-to-Speech.' },
+          { term: 'Amazon Kinesis', def: 'Ingests and analyzes real-time streaming data (IoT telemetry, GPS, clickstreams) continuously', tip: 'Real-time streaming equals Kinesis.' },
+          { term: 'Amazon Textract', def: 'Extracts printed text, handwriting, and key-value tables from scanned PDF documents/forms', tip: 'Extract text from scanned documents.' },
+          { term: 'Amazon Polly', def: 'Converts written text into lifelike spoken audio (Text-to-Speech)', tip: 'Polly wants a cracker — talking parrot equals Text-to-Speech.' },
           { term: 'Amazon Transcribe', def: 'Automatic speech recognition converting audio/video speech into written text (Speech-to-Text)', tip: 'Like a court transcriber writing down audio.' },
-          { term: 'Amazon Rekognition', def: 'Analyzes images and videos to detect objects, faces, celebrities, and inappropriate content', tip: 'Computer vision for images & video.' },
-          { term: 'Amazon Connect', def: 'Cloud-based omnichannel contact/call center (voice & chat routing) billed per call minute', tip: 'Connect = Call center; Lex = AI Chatbot.' },
-          { term: 'Amazon WorkSpaces', def: 'Managed, persistent cloud virtual Windows and Linux desktops (VDI) for remote employees', tip: 'Full virtual desktop = WorkSpaces.' },
-          { term: 'Amazon AppStream 2.0', def: 'Streams individual desktop applications directly into a user web browser without full VDI', tip: 'Browser-streamed apps = AppStream 2.0.' },
-          { term: 'Amazon SQS', def: 'Managed pull-based message queue to decouple microservices and buffer traffic spikes', tip: 'Queue/decoupling = SQS.' },
-          { term: 'Amazon SNS', def: 'Pub/Sub push notification service fanning out alerts to email, SMS, and Lambda simultaneously', tip: 'Fan-out push alerts = SNS; Workflows = Step Functions.' },
+          { term: 'Amazon Rekognition', def: 'Analyzes images and videos to detect objects, faces, celebrities, and inappropriate content', tip: 'Computer vision for images and video.' },
+          { term: 'Amazon Connect', def: 'Cloud-based omnichannel contact/call center (voice & chat routing) billed per call minute', tip: 'Connect equals Call center; Lex equals AI Chatbot.' },
+          { term: 'Amazon WorkSpaces', def: 'Managed, persistent cloud virtual Windows and Linux desktops (VDI) for remote employees', tip: 'Full virtual desktop equals WorkSpaces.' },
+          { term: 'Amazon AppStream 2.0', def: 'Streams individual desktop applications directly into a user web browser without full VDI', tip: 'Browser-streamed apps equals AppStream 2.0.' },
+          { term: 'Amazon SQS', def: 'Managed pull-based message queue to decouple microservices and buffer traffic spikes', tip: 'Queue and decoupling equals SQS.' },
+          { term: 'Amazon SNS', def: 'Pub/Sub push notification service fanning out alerts to email, SMS, and Lambda simultaneously', tip: 'Fan-out push alerts equals SNS; Workflows equals Step Functions.' },
           { term: 'AWS CodePipeline', def: 'Orchestrates the end-to-end CI/CD release pipeline (CodeCommit -> CodeBuild -> CodeDeploy)', tip: 'Orchestrates releases; AWS X-Ray traces microservice latency.' },
           { term: 'AWS Direct Connect', def: 'Dedicated private physical fiber link from on-prem to AWS bypassing the public internet', tip: 'Site-to-Site VPN is encrypted over the public internet.' },
-          { term: 'AWS Global Accelerator', def: 'Routes TCP/UDP/HTTP traffic over AWS private network using two static Anycast IPs (no caching)', tip: 'Static Anycast IPs & UDP = Global Accelerator; CDN caching = CloudFront.' },
-          { term: 'NAT Gateway', def: 'Allows EC2 instances in a private subnet outbound-only internet access while blocking inbound traffic', tip: 'Public subnet = Internet Gateway; Private subnet = NAT Gateway.' },
-          { term: 'Amazon Route 53', def: 'Highly available managed DNS service, domain registrar, and health-check traffic router', tip: 'Port 53 = DNS.' }
+          { term: 'AWS Global Accelerator', def: 'Routes TCP/UDP/HTTP traffic over AWS private network using two static Anycast IPs (no caching)', tip: 'Static Anycast IPs and UDP equals Global Accelerator; CDN equals CloudFront.' },
+          { term: 'NAT Gateway', def: 'Allows EC2 instances in a private subnet outbound-only internet access while blocking inbound traffic', tip: 'Public subnet uses Internet Gateway; Private subnet uses NAT Gateway.' },
+          { term: 'Amazon Route 53', def: 'Highly available managed DNS service, domain registrar, and health-check traffic router', tip: 'Port 53 is DNS.' }
         ]
       },
       d4: {
-        id: 'd4',
-        name: 'Domain 4: Billing, Pricing & Support',
-        weight: '12%',
+        id: 'd4', name: 'Domain 4: Billing, Pricing & Support', weight: '12%',
         pairs: [
           { term: 'EC2 Spot Instances', def: 'Up to 90% off unused EC2 capacity for fault-tolerant, interruptible jobs (2-minute warning)', tip: 'Lowest cost for stateless batch workloads.' },
-          { term: 'Compute Savings Plans', def: 'Most flexible 1- or 3-year spend commitment covering EC2 families, Regions, Fargate, and Lambda', tip: 'Standard RIs lock you to one EC2 family & Region.' },
-          { term: 'EC2 Dedicated Hosts', def: 'Physical server dedicated solely to you with socket/core visibility for BYOL licensing compliance', tip: 'Dedicated Instances isolate hardware but hide sockets/cores.' },
-          { term: 'Inbound vs. Outbound Data', def: 'Data transfer IN from the public internet is FREE ($0); data OUT to internet/cross-Region is charged', tip: 'IN = Free, OUT = Paid.' },
+          { term: 'Compute Savings Plans', def: 'Most flexible 1- or 3-year spend commitment covering EC2 families, Regions, Fargate, and Lambda', tip: 'Standard RIs lock you to one EC2 family and Region.' },
+          { term: 'EC2 Dedicated Hosts', def: 'Physical server dedicated solely to you with socket/core visibility for BYOL licensing compliance', tip: 'Dedicated Instances isolate hardware but hide sockets and cores.' },
+          { term: 'Inbound vs. Outbound Data', def: 'Data transfer IN from the public internet is FREE ($0); data OUT to internet/cross-Region is charged', tip: 'IN is Free, OUT is Paid.' },
           { term: 'AWS Pricing Calculator', def: 'Estimates monthly AWS architecture costs BEFORE deploying any cloud resources', tip: 'Pre-deployment cost estimator.' },
-          { term: 'AWS Cost Explorer', def: 'Visualizes historical AWS spending trends and forecasts costs up to 12 months ahead', tip: 'Post-deployment spend visualization & forecasting.' },
-          { term: 'AWS Budgets', def: 'Sets custom cost or usage thresholds and sends automated email/SNS alerts when exceeded', tip: 'Think Budgets = threshold alerts.' },
+          { term: 'AWS Cost Explorer', def: 'Visualizes historical AWS spending trends and forecasts costs up to 12 months ahead', tip: 'Post-deployment spend visualization and forecasting.' },
+          { term: 'AWS Budgets', def: 'Sets custom cost or usage thresholds and sends automated email/SNS alerts when exceeded', tip: 'Budgets equals threshold alerts.' },
           { term: 'AWS Cost & Usage Report (CUR)', def: 'Most comprehensive, granular line-item billing dataset delivered to Amazon S3', tip: 'Deepest billing granularity in AWS.' },
-          { term: 'AWS Organizations', def: 'Consolidated single invoice, combined volume tier discounts, and shared RIs/Savings Plans', tip: 'Also enforces guardrails via Service Control Policies (SCPs).' },
-          { term: 'Cost Allocation Tags', def: 'Key-value labels (e.g., Department=Sales) activated to break down costs by team in billing reports', tip: 'Must be activated in the Billing Console.' },
+          { term: 'AWS Organizations', def: 'Consolidated single invoice, combined volume tier discounts, and shared RIs/Savings Plans', tip: 'Also enforces guardrails via Service Control Policies.' },
+          { term: 'Cost Allocation Tags', def: 'Key-value labels (Department=Sales) activated to break down costs by team in billing reports', tip: 'Must be activated in the Billing Console.' },
           { term: 'AWS Basic Support (Free)', def: 'Account & billing support only + 7 core Trusted Advisor checks (NO technical support engineers)', tip: 'Free for all AWS accounts.' },
           { term: 'AWS Business Support', def: 'Lowest-cost plan with 24/7 phone/chat/email (<1h Prod Down) AND full Trusted Advisor checks', tip: 'Also unlocks the AWS Support API.' },
           { term: 'AWS Enterprise On-Ramp', def: 'Includes Pooled TAMs, Concierge Support, 1 IEM/year, and <30 min Business-Critical Down SLA', tip: 'Bridge between Business and full Enterprise.' },
-          { term: 'AWS Enterprise Support', def: 'Dedicated Technical Account Manager (TAM), Concierge Support, IEM included, and <15 min Critical SLA', tip: 'Fastest SLA (<15 min) + Dedicated TAM.' },
-          { term: 'AWS Trusted Advisor', def: 'Real-time best-practice checks across Cost, Performance, Security, Fault Tolerance, & Service Limits', tip: '7 core checks on Basic/Dev; full set on Business+.' },
-          { term: 'AWS IQ', def: 'Marketplace connecting customers with vetted, AWS-certified third-party freelancers for short projects', tip: 'Freelancers = IQ; AWS runs your ops = AMS; 3rd-party software = Marketplace.' }
+          { term: 'AWS Enterprise Support', def: 'Dedicated Technical Account Manager (TAM), Concierge Support, IEM included, and <15 min Critical SLA', tip: 'Fastest SLA under 15 minutes plus Dedicated TAM.' },
+          { term: 'AWS Trusted Advisor', def: 'Real-time best-practice checks across Cost, Performance, Security, Fault Tolerance, & Service Limits', tip: '7 core checks on Basic and Dev; full set on Business and above.' },
+          { term: 'AWS IQ', def: 'Marketplace connecting customers with vetted, AWS-certified third-party freelancers for short projects', tip: 'Freelancers equals IQ; AWS runs ops equals AMS; 3rd-party software equals Marketplace.' }
         ]
       },
       misses: {
-        id: 'misses',
-        name: 'My 23 Exam Misses Blitz',
-        weight: 'HIGH ROI',
+        id: 'misses', name: 'My 23 Exam Misses Blitz', weight: 'HIGH ROI',
         pairs: [
-          { term: 'Stop Guessing Capacity', def: 'Avoid buying idle physical servers months ahead of holiday spikes (not Economies of Scale)', tip: 'Q1 miss — idle over-provisioned servers = Stop Guessing Capacity.' },
-          { term: 'Operational Excellence Pillar', def: 'Operations as code, game days, and small reversible changes (not Reliability)', tip: 'Q7 miss — Processes & automation = Operational Excellence.' },
-          { term: 'AWS SCT + AWS DMS', def: 'Migrate Oracle to Aurora PostgreSQL: SCT converts schema + DMS migrates data', tip: 'Q11 miss — Heterogeneous DB migration needs SCT + DMS.' },
-          { term: 'Sustainability Pillar', def: 'Energy-efficient AWS Graviton processors and reducing carbon footprint (not Cost Optimization)', tip: 'Q28 miss — Carbon footprint / Graviton = Sustainability.' },
-          { term: 'Performance Efficiency Pillar', def: 'Use serverless architectures and democratize advanced technologies', tip: 'Q55 miss — Serverless + democratize tech = Performance Efficiency.' },
-          { term: 'Amazon Cognito', def: 'Millions of external web/mobile app end-users & social logins (not IAM Identity Center)', tip: 'Q17 miss — End-users = Cognito; Employees = IAM Identity Center.' },
-          { term: 'Amazon GuardDuty', def: 'ML threat detection on CloudTrail, VPC Flow Logs, & DNS logs (not Macie)', tip: 'Q45 miss — Log threat detection = GuardDuty; S3 PII = Macie.' },
-          { term: 'AWS CloudHSM', def: 'Dedicated single-tenant hardware security module for exclusive key control (not KMS)', tip: 'Q60 miss — Single-tenant HSM = CloudHSM.' },
-          { term: 'Amazon Textract', def: 'Extract printed text, handwriting, and tables from scanned PDF invoices (not Transcribe)', tip: 'Q13 miss — Scanned docs = Textract.' },
-          { term: 'Amazon Polly', def: 'Convert written text into lifelike spoken audio — Text-to-Speech (not Transcribe)', tip: 'Q58 miss — "Polly wants a cracker!" = Text-to-Speech.' },
-          { term: 'AWS Outposts', def: 'Physical AWS-managed hardware racks inside your own factory/data center (not Local Zones)', tip: 'Q21 miss — Inside YOUR building = Outposts.' },
-          { term: 'Amazon Athena', def: 'Serverless ad-hoc SQL queries directly on files in Amazon S3 (not Redshift)', tip: 'Q24 miss — Serverless SQL on S3 = Athena.' },
-          { term: 'Amazon Neptune', def: 'Managed Graph database for social networks & fraud detection rings (not DynamoDB)', tip: 'Q27 miss — Complex connected relationships = Neptune.' },
-          { term: 'Amazon WorkSpaces', def: 'Persistent cloud virtual Windows/Linux desktops (not AppStream 2.0)', tip: 'Q32 miss — Full desktops = WorkSpaces; Browser apps = AppStream.' },
-          { term: 'AWS CodePipeline', def: 'Orchestrates end-to-end CI/CD release pipeline (not AWS X-Ray)', tip: 'Q36 miss — CI/CD orchestration = CodePipeline; Tracing = X-Ray.' },
-          { term: 'Amazon Connect', def: 'Cloud omnichannel customer contact/call center billed per minute (not Lex)', tip: 'Q41 miss — Call center = Connect; Chatbot = Lex.' },
-          { term: 'EC2 Instance Store', def: 'Ephemeral local disk — data is permanently lost when EC2 is stopped (not persistent)', tip: 'Q43 miss — Ephemeral/lost on stop = Instance Store.' },
-          { term: 'AWS Storage Gateway', def: 'Hybrid on-premises local cache seamlessly backed by Amazon S3 (not EBS)', tip: 'Q53 miss — On-prem hybrid cache = Storage Gateway.' },
-          { term: 'Amazon SNS', def: 'Pub/Sub push notifications fanning out to email, SMS, and Lambda (not Step Functions)', tip: 'Q51 miss — Push alerts = SNS; Workflows = Step Functions.' },
-          { term: 'AWS Elastic Beanstalk', def: 'PaaS where you just upload web code and AWS manages EC2/ELB/Auto Scaling (not ECS)', tip: 'Q61 miss — Upload code PaaS = Elastic Beanstalk.' },
-          { term: 'AWS Business Support', def: 'Lowest-cost plan with 24/7 phone/chat/email + Full Trusted Advisor checks (not Basic)', tip: 'Q4 miss — Basic has zero technical engineers.' },
-          { term: 'Data Transfer IN ($0)', def: 'Inbound data from the public internet into AWS is FREE; outbound is charged', tip: 'Q47 miss — IN = Free ($0), OUT = Paid.' },
-          { term: 'Compute Savings Plans', def: 'Most flexible 1-3 yr discount across EC2 families, Regions, Fargate, & Lambda (not Standard RI)', tip: 'Q54 miss — Maximum flexibility = Compute Savings Plans.' }
+          { term: 'Stop Guessing Capacity', def: 'Avoid buying idle physical servers months ahead of holiday spikes (not Economies of Scale)', tip: 'Idle over-provisioned servers equals Stop Guessing Capacity.' },
+          { term: 'Operational Excellence Pillar', def: 'Operations as code, game days, and small reversible changes (not Reliability)', tip: 'Processes and automation equals Operational Excellence.' },
+          { term: 'AWS SCT + AWS DMS', def: 'Migrate Oracle to Aurora PostgreSQL: SCT converts schema + DMS migrates data', tip: 'Heterogeneous DB migration needs SCT plus DMS.' },
+          { term: 'Sustainability Pillar', def: 'Energy-efficient AWS Graviton processors and reducing carbon footprint (not Cost Optimization)', tip: 'Carbon footprint and Graviton equals Sustainability.' },
+          { term: 'Performance Efficiency Pillar', def: 'Use serverless architectures and democratize advanced technologies', tip: 'Serverless plus democratize tech equals Performance Efficiency.' },
+          { term: 'Amazon Cognito', def: 'Millions of external web/mobile app end-users & social logins (not IAM Identity Center)', tip: 'End-users equals Cognito; Employees equals IAM Identity Center.' },
+          { term: 'Amazon GuardDuty', def: 'ML threat detection on CloudTrail, VPC Flow Logs, & DNS logs (not Macie)', tip: 'Log threat detection equals GuardDuty; S3 PII equals Macie.' },
+          { term: 'AWS CloudHSM', def: 'Dedicated single-tenant hardware security module for exclusive key control (not KMS)', tip: 'Single-tenant HSM equals CloudHSM.' },
+          { term: 'Amazon Textract', def: 'Extract printed text, handwriting, and tables from scanned PDF invoices (not Transcribe)', tip: 'Scanned documents equals Textract.' },
+          { term: 'Amazon Polly', def: 'Convert written text into lifelike spoken audio — Text-to-Speech (not Transcribe)', tip: 'Polly wants a cracker equals Text-to-Speech.' },
+          { term: 'AWS Outposts', def: 'Physical AWS-managed hardware racks inside your own factory/data center (not Local Zones)', tip: 'Inside YOUR building equals Outposts.' },
+          { term: 'Amazon Athena', def: 'Serverless ad-hoc SQL queries directly on files in Amazon S3 (not Redshift)', tip: 'Serverless SQL on S3 equals Athena.' },
+          { term: 'Amazon Neptune', def: 'Managed Graph database for social networks & fraud detection rings (not DynamoDB)', tip: 'Complex connected relationships equals Neptune.' },
+          { term: 'Amazon WorkSpaces', def: 'Persistent cloud virtual Windows/Linux desktops (not AppStream 2.0)', tip: 'Full desktops equals WorkSpaces; Browser apps equals AppStream.' },
+          { term: 'AWS CodePipeline', def: 'Orchestrates end-to-end CI/CD release pipeline (not AWS X-Ray)', tip: 'CI/CD orchestration equals CodePipeline; Tracing equals X-Ray.' },
+          { term: 'Amazon Connect', def: 'Cloud omnichannel customer contact/call center billed per minute (not Lex)', tip: 'Call center equals Connect; Chatbot equals Lex.' },
+          { term: 'EC2 Instance Store', def: 'Ephemeral local disk — data is permanently lost when EC2 is stopped (not persistent)', tip: 'Ephemeral and lost on stop equals Instance Store.' },
+          { term: 'AWS Storage Gateway', def: 'Hybrid on-premises local cache seamlessly backed by Amazon S3 (not EBS)', tip: 'On-prem hybrid cache equals Storage Gateway.' },
+          { term: 'Amazon SNS', def: 'Pub/Sub push notifications fanning out to email, SMS, and Lambda (not Step Functions)', tip: 'Push alerts equals SNS; Workflows equals Step Functions.' },
+          { term: 'AWS Elastic Beanstalk', def: 'PaaS where you just upload web code and AWS manages EC2/ELB/Auto Scaling (not ECS)', tip: 'Upload code PaaS equals Elastic Beanstalk.' },
+          { term: 'AWS Business Support', def: 'Lowest-cost plan with 24/7 phone/chat/email + Full Trusted Advisor checks (not Basic)', tip: 'Basic has zero technical engineers.' },
+          { term: 'Data Transfer IN ($0)', def: 'Inbound data from the public internet into AWS is FREE; outbound is charged', tip: 'IN is Free, OUT is Paid.' },
+          { term: 'Compute Savings Plans', def: 'Most flexible 1-3 yr discount across EC2 families, Regions, Fargate, & Lambda (not Standard RI)', tip: 'Maximum flexibility equals Compute Savings Plans.' }
         ]
       }
     };
 
-    const STORAGE_KEY = 'aws_clf_c02_matching_v1';
+    /* INTERACTIVE VISUAL DECISION TREES */
+    const DECISION_TREES = {
+      storage: {
+        title: 'Storage Decision Tree (S3 vs EBS vs EFS vs FSx)',
+        root: 's_root',
+        nodes: {
+          s_root: {
+            q: 'What type of storage access does the workload need?',
+            desc: 'Identify whether the exam scenario asks for Object, Block, Shared File, or Hybrid On-Premises caching.',
+            branches: [
+              { label: 'Object Storage (Web files, backups, data lake, 11 nines)', next: 's_obj' },
+              { label: 'Block Storage (Virtual hard drive for 1 EC2 instance)', next: 's_block' },
+              { label: 'Shared File System (Multiple EC2s mounting same drive)', next: 's_file' },
+              { label: 'Hybrid On-Premises (Local cache backed by S3/Glacier)', next: 's_gw' }
+            ]
+          },
+          s_obj: {
+            q: 'What is the S3 access pattern & retrieval requirement?',
+            desc: 'Match the S3 storage class to access frequency and cost sensitivity.',
+            branches: [
+              { label: 'Unknown / Unpredictable access patterns, zero retrieval fees', next: 's_s3_it' },
+              { label: '7-10 yr compliance archive, 12-48 hr retrieval OK, lowest cost', next: 's_s3_da' },
+              { label: 'Frequent access / Static website hosting', next: 's_s3_std' }
+            ]
+          },
+          s_block: {
+            q: 'Must the data survive an EC2 Stop / Start?',
+            desc: 'This is one of the most common CLF-C02 traps!',
+            branches: [
+              { label: 'YES — Persistent database / OS volume', next: 's_ebs' },
+              { label: 'NO — Temporary scratch/cache/buffer data (ephemeral)', next: 's_inst' }
+            ]
+          },
+          s_file: {
+            q: 'Which OS protocol does the shared file system need?',
+            desc: 'Linux NFS vs. Windows SMB splits EFS and FSx instantly.',
+            branches: [
+              { label: 'Linux NFS across multiple Availability Zones', next: 's_efs' },
+              { label: 'Windows SMB with Active Directory (or Lustre HPC)', next: 's_fsx' }
+            ]
+          },
+          s_s3_it: { leaf: true, service: 'Amazon S3 Intelligent-Tiering', desc: 'Automatically shifts objects between access tiers with zero retrieval fees whenever access patterns are unknown or changing.' },
+          s_s3_da: { leaf: true, service: 'Amazon S3 Glacier Deep Archive', desc: 'Absolute lowest-cost storage in AWS (~$0.00099/GB), built for 7-10 year regulatory retention with 12-48 hour retrieval.' },
+          s_s3_std: { leaf: true, service: 'Amazon S3 Standard (+ CloudFront)', desc: '99.999999999% (11 nines) durability, max 5 TB object size. Pair with CloudFront for global static websites.' },
+          s_ebs: { leaf: true, service: 'Amazon EBS (Elastic Block Store)', desc: 'Persistent network-attached block volume locked to a single Availability Zone. Survives EC2 stop/start; snapshots go to S3.' },
+          s_inst: { leaf: true, service: 'EC2 Instance Store', desc: 'Physically attached ephemeral disk. Ultra-fast, but data is PERMANENTLY LOST on EC2 stop, hibernate, or terminate.' },
+          s_efs: { leaf: true, service: 'Amazon EFS (Elastic File System)', desc: 'Serverless, elastic Linux NFS file share that hundreds of EC2 instances across multiple AZs can mount simultaneously.' },
+          s_fsx: { leaf: true, service: 'Amazon FSx (Windows File Server / Lustre)', desc: 'Fully managed native Windows SMB file shares with Active Directory integration, or FSx for Lustre for HPC workloads.' },
+          s_gw: { leaf: true, service: 'AWS Storage Gateway', desc: 'Hybrid cloud bridge giving on-premises applications low-latency local cached access while storing data durably in Amazon S3.' }
+        }
+      },
+      security: {
+        title: 'Security & Compliance Tree (GuardDuty vs Inspector vs Macie)',
+        root: 'sec_root',
+        nodes: {
+          sec_root: {
+            q: 'What security problem is the exam question describing?',
+            desc: 'Separate Detection/Scanning, Perimeter Defense, Auditing/Compliance, and Identity.',
+            branches: [
+              { label: 'ML Threat Detection, CVE Scanning, or S3 PII Discovery', next: 'sec_ml' },
+              { label: 'Blocking Web Attacks (SQLi/XSS) or DDoS', next: 'sec_edge' },
+              { label: 'Auditing API calls, Config History, or Compliance Reports', next: 'sec_audit' },
+              { label: 'User Login (End-Users vs Employees) or Encryption Keys', next: 'sec_id' }
+            ]
+          },
+          sec_ml: {
+            q: 'What is the service inspecting?',
+            desc: 'Lock in the Big 3 Security ML trio + Security Hub.',
+            branches: [
+              { label: 'CloudTrail, VPC Flow Logs, & DNS logs for threats/crypto mining', next: 'sec_gd' },
+              { label: 'EC2, Lambda, & ECR container images for software CVEs', next: 'sec_insp' },
+              { label: 'Amazon S3 buckets for PII (SSNs, credit cards)', next: 'sec_macie' },
+              { label: 'Aggregating alerts from ALL of the above in one dashboard', next: 'sec_hub' }
+            ]
+          },
+          sec_edge: {
+            q: 'Which OSI layer / attack type are you blocking?',
+            desc: 'Layer 7 HTTP payloads vs. Layer 3/4 volumetric floods.',
+            branches: [
+              { label: 'Layer 7 HTTP/HTTPS (SQL injection, XSS, bad bots)', next: 'sec_waf' },
+              { label: 'Layer 3/4 DDoS volumetric attacks', next: 'sec_shield' }
+            ]
+          },
+          sec_audit: {
+            q: 'Which audit artifact do you need?',
+            desc: 'WHO vs WHAT vs AWS Compliance Paperwork.',
+            branches: [
+              { label: 'WHO made an AWS API call & from which IP', next: 'sec_ct' },
+              { label: 'WHAT a resource configuration looked like over time', next: 'sec_cfg' },
+              { label: 'Download AWS SOC 2 / ISO reports or accept HIPAA BAA', next: 'sec_art' }
+            ]
+          },
+          sec_id: {
+            q: 'Identity or Cryptographic Keys?',
+            desc: 'Spot the exact audience or single-tenant hardware keyword.',
+            branches: [
+              { label: 'Millions of external mobile/web app users + social logins', next: 'sec_cog' },
+              { label: 'Internal employees signing into multiple AWS accounts (SSO)', next: 'sec_sso' },
+              { label: 'Dedicated SINGLE-TENANT HSM hardware (FIPS 140-2 L3)', next: 'sec_hsm' },
+              { label: 'Store DB passwords with automatic rotation', next: 'sec_sm' }
+            ]
+          },
+          sec_gd: { leaf: true, service: 'Amazon GuardDuty', desc: 'ML-powered threat detection watching CloudTrail, VPC Flow Logs, and DNS logs for compromised accounts or crypto mining.' },
+          sec_insp: { leaf: true, service: 'Amazon Inspector', desc: 'Automated vulnerability management scanning EC2, Lambda, and ECR images for software CVEs and unintended network exposure.' },
+          sec_macie: { leaf: true, service: 'Amazon Macie', desc: 'Uses machine learning strictly to discover and classify sensitive data / PII inside Amazon S3 buckets.' },
+          sec_hub: { leaf: true, service: 'AWS Security Hub', desc: 'Central single-pane-of-glass dashboard normalizing and prioritizing findings from GuardDuty, Inspector, Macie, and Firewall Manager.' },
+          sec_waf: { leaf: true, service: 'AWS WAF', desc: 'Layer 7 Web Application Firewall attached to CloudFront, ALB, or API Gateway to block SQLi, XSS, and malicious HTTP rules.' },
+          sec_shield: { leaf: true, service: 'AWS Shield (Standard = Free, Advanced = Paid)', desc: 'Managed DDoS protection. Standard is free & automatic for all customers; Advanced adds 24/7 Shield Response Team + cost protection.' },
+          sec_ct: { leaf: true, service: 'AWS CloudTrail', desc: 'Governance and API auditing — records WHO called WHAT API, WHEN, and from WHICH IP.' },
+          sec_cfg: { leaf: true, service: 'AWS Config', desc: 'Records resource configuration history over time and evaluates compliance against rules.' },
+          sec_art: { leaf: true, service: 'AWS Artifact', desc: 'Self-service portal for on-demand AWS compliance reports (SOC, PCI, ISO) and legal agreements (HIPAA BAA).' },
+          sec_cog: { leaf: true, service: 'Amazon Cognito', desc: 'Customer identity pool for millions of external web/mobile app end-users with Google/Apple/Facebook social logins.' },
+          sec_sso: { leaf: true, service: 'AWS IAM Identity Center (AWS SSO)', desc: 'Centralized workforce SSO allowing internal employees to access multiple AWS Organizations accounts with one login.' },
+          sec_hsm: { leaf: true, service: 'AWS CloudHSM', desc: 'Dedicated, SINGLE-TENANT hardware security module giving you exclusive cryptographic key control (KMS is multi-tenant).' },
+          sec_sm: { leaf: true, service: 'AWS Secrets Manager', desc: 'Securely stores DB credentials and API keys with built-in automatic rotation.' }
+        }
+      },
+      aiml: {
+        title: 'AI/ML Decision Tree (Textract vs Polly vs Transcribe)',
+        root: 'ai_root',
+        nodes: {
+          ai_root: {
+            q: 'What media or input type is the AI service processing?',
+            desc: 'Match the input/output type to instantly eliminate 3 distractors.',
+            branches: [
+              { label: 'Speech / Audio (Text-to-Speech or Speech-to-Text)', next: 'ai_speech' },
+              { label: 'Documents, Images, or Video', next: 'ai_vis' },
+              { label: 'Text Understanding, Translation, Search, or Chatbots', next: 'ai_text' },
+              { label: 'Build, Train, & Deploy Custom ML Models from Scratch', next: 'ai_sm' }
+            ]
+          },
+          ai_speech: {
+            q: 'Which direction is the conversion?',
+            desc: 'Remember: Polly is a talking parrot!',
+            branches: [
+              { label: 'Written Text -> Lifelike Spoken Audio', next: 'ai_polly' },
+              { label: 'Spoken Audio / Podcasts -> Written Text Transcripts', next: 'ai_trans' }
+            ]
+          },
+          ai_vis: {
+            q: 'Scanned documents/forms or photos/videos?',
+            desc: 'Textract = scanned forms; Rekognition = computer vision.',
+            branches: [
+              { label: 'Scanned PDFs, invoices, handwriting, & tables (OCR)', next: 'ai_tex' },
+              { label: 'Photos & videos (faces, objects, inappropriate content)', next: 'ai_rek' }
+            ]
+          },
+          ai_text: {
+            q: 'What text capability is needed?',
+            desc: 'NLP vs. Translation vs. Enterprise Search vs. Chatbots.',
+            branches: [
+              { label: 'Sentiment analysis, entities, & key phrases (NLP)', next: 'ai_comp' },
+              { label: 'Translate text across languages', next: 'ai_tr' },
+              { label: 'Intelligent enterprise search across SharePoint/S3/wikis', next: 'ai_ken' },
+              { label: 'Conversational voice/text AI chatbots (Alexa engine)', next: 'ai_lex' }
+            ]
+          },
+          ai_polly: { leaf: true, service: 'Amazon Polly', desc: '"Polly wants a cracker!" Converts written text into lifelike spoken audio (Text-to-Speech).' },
+          ai_trans: { leaf: true, service: 'Amazon Transcribe', desc: 'Automatic Speech Recognition (Speech-to-Text) turning audio/video recordings into written captions or transcripts.' },
+          ai_tex: { leaf: true, service: 'Amazon Textract', desc: 'Extracts printed text, handwriting, and structured key-value tables from scanned PDFs and forms.' },
+          ai_rek: { leaf: true, service: 'Amazon Rekognition', desc: 'Computer vision for images and video — detects faces, objects, scenes, and unsafe content.' },
+          ai_comp: { leaf: true, service: 'Amazon Comprehend', desc: 'Natural Language Processing (NLP) for sentiment analysis, entity extraction, and language detection.' },
+          ai_tr: { leaf: true, service: 'Amazon Translate', desc: 'Fast, neural machine language translation across dozens of languages.' },
+          ai_ken: { leaf: true, service: 'Amazon Kendra', desc: 'ML-powered intelligent enterprise search across internal documents, wikis, and S3.' },
+          ai_lex: { leaf: true, service: 'Amazon Lex', desc: 'Conversational AI chatbot builder for voice and text (note: cloud call center is Amazon Connect).' },
+          ai_sm: { leaf: true, service: 'Amazon SageMaker', desc: 'End-to-end managed ML platform for data scientists to build, train, and deploy custom models.' }
+        }
+      },
+      compute: {
+        title: 'Compute & EC2 Pricing Tree',
+        root: 'c_root',
+        nodes: {
+          c_root: {
+            q: 'How much server management does the team want?',
+            desc: 'Serverless vs. PaaS vs. Full EC2 control.',
+            branches: [
+              { label: 'Zero servers — event-driven short functions (<15 min)', next: 'c_lam' },
+              { label: 'Zero servers — running Docker containers on ECS/EKS', next: 'c_farg' },
+              { label: 'PaaS — "just upload my web code" (still keep EC2 access)', next: 'c_eb' },
+              { label: 'Full OS control on Amazon EC2 (choose Pricing Option)', next: 'c_ec2' }
+            ]
+          },
+          c_ec2: {
+            q: 'What is the workload pattern or licensing rule?',
+            desc: 'Match the EC2 purchasing model to maximize savings.',
+            branches: [
+              { label: 'Fault-tolerant, interruptible batch job (lowest cost, up to 90% off)', next: 'c_spot' },
+              { label: '1-3 yr commitment WITH max flexibility (EC2 + Regions + Fargate + Lambda)', next: 'c_sp' },
+              { label: 'BYOL software bound to physical server sockets & cores', next: 'c_dh' },
+              { label: 'Short-term, spiky, unpredictable workload (no commitment)', next: 'c_od' }
+            ]
+          },
+          c_lam: { leaf: true, service: 'AWS Lambda', desc: 'Serverless event-driven compute billed per request and compute millisecond (max 15-minute runtime).' },
+          c_farg: { leaf: true, service: 'AWS Fargate', desc: 'Serverless compute engine for running Docker containers on Amazon ECS or EKS without provisioning EC2 instances.' },
+          c_eb: { leaf: true, service: 'AWS Elastic Beanstalk', desc: 'Classic PaaS — upload Python/Node/Java code and AWS automates EC2, ELB, Auto Scaling, and health monitoring.' },
+          c_spot: { leaf: true, service: 'EC2 Spot Instances', desc: 'Up to 90% off unused EC2 capacity; AWS gives a 2-minute interruption warning. Ideal for stateless batch/rendering jobs.' },
+          c_sp: { leaf: true, service: 'Compute Savings Plans', desc: 'Most flexible 1- or 3-year $/hr commitment applying automatically across EC2 families, Regions, Fargate, and Lambda.' },
+          c_dh: { leaf: true, service: 'EC2 Dedicated Hosts', desc: 'Physical server dedicated solely to you with socket & core visibility for BYOL licensing compliance.' },
+          c_od: { leaf: true, service: 'EC2 On-Demand Instances', desc: 'Pay per second/hour with zero long-term commitment. Best for unpredictable or short-term workloads.' }
+        }
+      }
+    };
+
+    const STORAGE_KEY = 'aws_clf_c02_matching_v2_srs';
     const state = {
-      deckId: 'd3', // default to Domain 3 (#1 priority)
+      view: 'matching',
+      deckId: 'd3',
       roundSize: 8,
       rounds: [],
       roundIndex: 0,
@@ -734,22 +771,48 @@
       attempts: 0,
       correct: 0,
       streak: 0,
-      missedThisDeck: new Map(), // term -> pair
+      missedThisDeck: new Map(),
       isMissedDrill: false,
+      focusDueOnly: false,
+      autoNarrate: false,
       timerSec: 0,
       timerHandle: null,
       locked: false,
-      progress: loadProgress()
+      srs: loadSrs(), // { deckId: { term: boxNumber (1..3) } }
+      blitzActive: false,
+      blitzQueue: [],
+      blitzIdx: 0,
+      blitzTimeout: null,
+      treeId: 'storage',
+      treeHistory: ['s_root']
     };
 
-    function loadProgress() {
+    function loadSrs() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
       catch { return {}; }
     }
+    function saveSrs() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.srs)); } catch {}
+    }
+    function getBox(deckId, term) {
+      return (state.srs[deckId] && state.srs[deckId][term]) || 1;
+    }
+    function setBox(deckId, term, box) {
+      if (!state.srs[deckId]) state.srs[deckId] = {};
+      state.srs[deckId][term] = Math.max(1, Math.min(3, box));
+      saveSrs();
+    }
 
-    function saveProgress() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress)); }
-      catch {}
+    function speak(text, onEnd = null) {
+      if (!('speechSynthesis' in window)) { if (onEnd) onEnd(); return; }
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = Number(document.getElementById('voiceRate').value || 1.05);
+      if (onEnd) u.onend = onEnd;
+      window.speechSynthesis.speak(u);
+    }
+    function stopSpeech() {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     }
 
     function shuffle(arr) {
@@ -760,22 +823,17 @@
       }
       return a;
     }
-
     function formatTime(sec) {
-      const m = String(Math.floor(sec / 60)).padStart(2, '0');
-      const s = String(sec % 60).padStart(2, '0');
-      return `${m}:${s}`;
+      return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
     }
 
     function updateCountdown() {
-      const examDate = new Date('2026-12-02T09:00:00');
-      const now = new Date();
-      const diff = Math.max(0, Math.ceil((examDate - now) / (1000 * 60 * 60 * 24)));
+      const diff = Math.max(0, Math.ceil((new Date('2026-12-02T09:00:00') - new Date()) / 86400000));
       document.getElementById('daysLeft').textContent = diff;
     }
 
     function startTimer() {
-      stopTimer();
+      clearInterval(state.timerHandle);
       state.timerSec = 0;
       document.getElementById('hudTimer').textContent = '00:00';
       state.timerHandle = setInterval(() => {
@@ -784,19 +842,29 @@
       }, 1000);
     }
 
-    function stopTimer() {
-      if (state.timerHandle) {
-        clearInterval(state.timerHandle);
-        state.timerHandle = null;
-      }
+    function updateLeitnerUi() {
+      const pairs = DECKS[state.deckId].pairs;
+      let b1 = 0, b2 = 0, b3 = 0;
+      pairs.forEach(p => {
+        const b = getBox(state.deckId, p.term);
+        if (b === 1) b1++; else if (b === 2) b2++; else b3++;
+      });
+      document.getElementById('box1Count').textContent = `Box 1 (Learning/Missed): ${b1}`;
+      document.getElementById('box2Count').textContent = `Box 2 (Reviewing): ${b2}`;
+      document.getElementById('box3Count').textContent = `Box 3 (Mastered): ${b3}`;
+
+      const pct = Math.round((b3 / pairs.length) * 100);
+      const circ = 138.23;
+      document.getElementById('masteryRingFill').style.strokeDashoffset = circ * (1 - pct / 100);
+      document.getElementById('masteryRingPct').textContent = `${pct}%`;
     }
 
     function renderTabs() {
       const container = document.getElementById('domainTabs');
       container.innerHTML = '';
       Object.values(DECKS).forEach(deck => {
-        const p = state.progress[deck.id] || { mastered: 0, bestTime: null };
-        const pct = Math.min(100, Math.round((p.mastered / deck.pairs.length) * 100));
+        const mastered = deck.pairs.filter(p => getBox(deck.id, p.term) === 3).length;
+        const pct = Math.round((mastered / deck.pairs.length) * 100);
         const btn = document.createElement('button');
         btn.className = `tab-btn ${state.deckId === deck.id ? 'active' : ''}`;
         btn.innerHTML = `
@@ -806,11 +874,9 @@
           </div>
           <div class="tab-meta">
             <span>${deck.pairs.length} pairs</span>
-            <span>${p.bestTime ? 'Best ' + formatTime(p.bestTime) : pct + '% done'}</span>
+            <span>${pct}% mastered</span>
           </div>
-          <div class="tab-progress-bar">
-            <div class="tab-progress-fill" style="width:${pct}%"></div>
-          </div>
+          <div class="tab-progress-bar"><div class="tab-progress-fill" style="width:${pct}%"></div></div>
         `;
         btn.onclick = () => selectDeck(deck.id);
         container.appendChild(btn);
@@ -818,22 +884,36 @@
     }
 
     function selectDeck(deckId, customPairs = null) {
+      stopBlitz();
       state.deckId = deckId;
       state.isMissedDrill = Boolean(customPairs);
-      const source = customPairs ? shuffle(customPairs) : shuffle(DECKS[deckId].pairs);
+      let pool = customPairs ? [...customPairs] : [...DECKS[deckId].pairs];
+
+      if (!customPairs && state.focusDueOnly) {
+        const due = pool.filter(p => getBox(deckId, p.term) < 3);
+        pool = due.length > 0 ? due : pool;
+      }
+
+      // Leitner priority sort: Box 1 first, then Box 2, then Box 3 (shuffled within each box)
+      const b1 = shuffle(pool.filter(p => getBox(deckId, p.term) === 1));
+      const b2 = shuffle(pool.filter(p => getBox(deckId, p.term) === 2));
+      const b3 = shuffle(pool.filter(p => getBox(deckId, p.term) === 3));
+      const ordered = [...b1, ...b2, ...b3];
+
       state.rounds = [];
-      for (let i = 0; i < source.length; i += state.roundSize) {
-        state.rounds.push(source.slice(i, i + state.roundSize));
+      for (let i = 0; i < ordered.length; i += state.roundSize) {
+        state.rounds.push(ordered.slice(i, i + state.roundSize));
       }
       state.roundIndex = 0;
       if (!customPairs) state.missedThisDeck.clear();
       renderTabs();
+      updateLeitnerUi();
       loadRound(0);
     }
 
     function loadRound(idx) {
       state.roundIndex = idx;
-      state.currentPairs = state.rounds[idx].map((p, i) => ({ ...p, uid: i }));
+      state.currentPairs = state.rounds[idx].map((p, i) => ({ ...p, uid: i, missedThisRound: false }));
       state.leftItems = shuffle(state.currentPairs);
       state.rightItems = shuffle(state.currentPairs);
       state.selectedLeft = null;
@@ -847,8 +927,8 @@
       document.getElementById('summaryPanel').classList.remove('visible');
       document.getElementById('btnNextRound').disabled = true;
       setFeedback('neutral', state.isMissedDrill
-        ? 'Missed-Pair Drill Mode: lock these into muscle memory!'
-        : `Round ${idx + 1} of ${state.rounds.length} — match each service/concept to its AWS exam trigger.`);
+        ? 'Missed-Pair Drill Mode: nail every pair to promote it to Box 2.'
+        : `Round ${idx + 1} of ${state.rounds.length} — Box 1 items are prioritized first.`);
       renderBoard();
       updateHud();
       startTimer();
@@ -864,9 +944,7 @@
       const total = state.currentPairs.length;
       const matched = state.matchedIds.size;
       const acc = state.attempts === 0 ? 100 : Math.round((state.correct / state.attempts) * 100);
-      document.getElementById('hudRound').textContent = state.isMissedDrill
-        ? 'MISSES'
-        : `${state.roundIndex + 1} / ${state.rounds.length}`;
+      document.getElementById('hudRound').textContent = state.isMissedDrill ? 'MISSES' : `${state.roundIndex + 1} / ${state.rounds.length}`;
       document.getElementById('hudMatched').textContent = `${matched} / ${total}`;
       document.getElementById('hudAccuracy').textContent = `${acc}%`;
       document.getElementById('hudStreak').textContent = state.streak;
@@ -882,7 +960,6 @@
       const rightCol = document.getElementById('rightColumn');
       leftCol.innerHTML = '';
       rightCol.innerHTML = '';
-
       document.getElementById('leftCount').textContent = `${state.leftItems.length} terms`;
       document.getElementById('rightCount').textContent = `${state.rightItems.length} triggers`;
 
@@ -890,13 +967,13 @@
         const card = document.createElement('button');
         const isMatched = state.matchedIds.has(item.uid);
         const isSelected = state.selectedLeft === item.uid;
+        const box = getBox(state.deckId, item.term);
         card.className = `match-card ${isMatched ? 'matched' : ''} ${isSelected ? 'selected' : ''}`;
-        card.dataset.side = 'left';
-        card.dataset.uid = item.uid;
-        card.disabled = isMatched;
+        card.dataset.side = 'left'; card.dataset.uid = item.uid; card.disabled = isMatched;
         card.innerHTML = `
           <span class="key-tag">${isMatched ? '✓' : idx + 1}</span>
           <span class="term-text">${item.term}</span>
+          <span class="box-dot">B${box}</span>
         `;
         card.onclick = () => handleSelect('left', item.uid);
         leftCol.appendChild(card);
@@ -908,9 +985,7 @@
         const isMatched = state.matchedIds.has(item.uid);
         const isSelected = state.selectedRight === item.uid;
         card.className = `match-card ${isMatched ? 'matched' : ''} ${isSelected ? 'selected' : ''}`;
-        card.dataset.side = 'right';
-        card.dataset.uid = item.uid;
-        card.disabled = isMatched;
+        card.dataset.side = 'right'; card.dataset.uid = item.uid; card.disabled = isMatched;
         card.innerHTML = `
           <span class="key-tag">${isMatched ? '✓' : letters[idx]}</span>
           <span class="def-text">${item.def}</span>
@@ -922,12 +997,8 @@
 
     function handleSelect(side, uid) {
       if (state.locked || state.matchedIds.has(uid)) return;
-
-      if (side === 'left') {
-        state.selectedLeft = state.selectedLeft === uid ? null : uid;
-      } else {
-        state.selectedRight = state.selectedRight === uid ? null : uid;
-      }
+      if (side === 'left') state.selectedLeft = state.selectedLeft === uid ? null : uid;
+      else state.selectedRight = state.selectedRight === uid ? null : uid;
 
       if (state.selectedLeft !== null && state.selectedRight !== null) {
         evaluatePair(state.selectedLeft, state.selectedRight);
@@ -946,26 +1017,40 @@
         state.matchedIds.add(leftUid);
         state.selectedLeft = null;
         state.selectedRight = null;
-        setFeedback('match', `Matched! ${leftPair.term} — ${leftPair.tip}`);
+
+        // Promote Leitner box if solved cleanly on first try
+        if (!leftPair.missedThisRound) {
+          setBox(state.deckId, leftPair.term, getBox(state.deckId, leftPair.term) + 1);
+        }
+        const newBox = getBox(state.deckId, leftPair.term);
+        const msg = `Matched! ${leftPair.term} (Box ${newBox}) — ${leftPair.tip}`;
+        setFeedback('match', msg);
+        if (state.autoNarrate) speak(`${leftPair.term}. ${leftPair.tip}`);
+
         renderBoard();
+        renderTabs();
+        updateLeitnerUi();
         updateHud();
 
-        if (state.matchedIds.size === state.currentPairs.length) {
-          onRoundComplete();
-        }
+        if (state.matchedIds.size === state.currentPairs.length) onRoundComplete();
       } else {
         state.streak = 0;
         state.locked = true;
+        leftPair.missedThisRound = true;
+        setBox(state.deckId, leftPair.term, 1); // Demote back to Box 1
         state.missedThisDeck.set(leftPair.term, leftPair);
-        setFeedback('mismatch', `Mismatch — Hint for ${leftPair.term}: ${leftPair.tip}`);
-        renderBoard();
 
-        // Flash red mismatch on the two chosen cards
+        const msg = `Mismatch (requeued to Box 1) — Hint for ${leftPair.term}: ${leftPair.tip}`;
+        setFeedback('mismatch', msg);
+        if (state.autoNarrate) speak(`Hint for ${leftPair.term}: ${leftPair.tip}`);
+        renderBoard();
+        updateLeitnerUi();
+        updateHud();
+
         const lCard = document.querySelector(`.match-card[data-side="left"][data-uid="${leftUid}"]`);
         const rCard = document.querySelector(`.match-card[data-side="right"][data-uid="${rightUid}"]`);
         if (lCard) lCard.classList.add('mismatch');
         if (rCard) rCard.classList.add('mismatch');
-        updateHud();
 
         setTimeout(() => {
           state.selectedLeft = null;
@@ -977,42 +1062,33 @@
     }
 
     function onRoundComplete() {
-      stopTimer();
+      clearInterval(state.timerHandle);
       const acc = Math.round((state.correct / state.attempts) * 100);
-      const hasNext = state.roundIndex < state.rounds.length - 1;
 
-      if (!state.isMissedDrill) {
-        const prev = state.progress[state.deckId] || { mastered: 0, bestTime: null };
-        const completedSoFar = Math.min(
-          DECKS[state.deckId].pairs.length,
-          (state.roundIndex + 1) * state.roundSize
-        );
-        prev.mastered = Math.max(prev.mastered, completedSoFar);
-        if (!hasNext && (prev.bestTime === null || state.timerSec < prev.bestTime)) {
-          prev.bestTime = state.timerSec;
-        }
-        state.progress[state.deckId] = prev;
-        saveProgress();
-        renderTabs();
+      // Auto-requeue missed items from this round into the next round if one exists
+      const missedThisRound = state.currentPairs.filter(p => p.missedThisRound);
+      if (missedThisRound.length > 0 && state.roundIndex < state.rounds.length - 1) {
+        const nextRound = state.rounds[state.roundIndex + 1];
+        missedThisRound.forEach(mp => {
+          if (!nextRound.some(x => x.term === mp.term)) nextRound.unshift(mp);
+        });
       }
 
+      const hasNext = state.roundIndex < state.rounds.length - 1;
       document.getElementById('btnNextRound').disabled = !hasNext;
       const panel = document.getElementById('summaryPanel');
       panel.classList.add('visible');
 
       document.getElementById('summaryTitle').textContent = hasNext
         ? `Round ${state.roundIndex + 1} Complete!`
-        : `${DECKS[state.deckId].name} — Deck Cleared!`;
+        : `${DECKS[state.deckId].name} — Deck Complete!`;
 
       document.getElementById('summaryStats').textContent =
-        `Accuracy: ${acc}% (${state.correct}/${state.attempts}) • Time: ${formatTime(state.timerSec)} • Misses this deck: ${state.missedThisDeck.size}`;
+        `Accuracy: ${acc}% (${state.correct}/${state.attempts}) • Time: ${formatTime(state.timerSec)} • Auto-requeued Box 1 misses: ${missedThisRound.length}`;
 
       const nextBtn = document.getElementById('btnSummaryNext');
       nextBtn.textContent = hasNext ? `Start Round ${state.roundIndex + 2}` : 'Play Deck Again';
-      nextBtn.onclick = () => {
-        if (hasNext) loadRound(state.roundIndex + 1);
-        else selectDeck(state.deckId);
-      };
+      nextBtn.onclick = () => { if (hasNext) loadRound(state.roundIndex + 1); else selectDeck(state.deckId); };
 
       const missedArr = Array.from(state.missedThisDeck.values());
       const missedBox = document.getElementById('missedListContainer');
@@ -1021,7 +1097,7 @@
         missedBox.style.display = 'block';
         missedBtn.style.display = 'inline-block';
         document.getElementById('missedList').innerHTML = missedArr.map(m =>
-          `<div class="missed-item"><strong>${m.term}:</strong> <span>${m.def}</span></div>`
+          `<div class="missed-item"><strong>${m.term}:</strong> <span style="color:var(--text-secondary);">${m.def}</span></div>`
         ).join('');
       } else {
         missedBox.style.display = 'none';
@@ -1029,27 +1105,167 @@
       }
     }
 
-    // Controls
-    document.getElementById('btnShuffle').onclick = () => selectDeck(state.deckId);
-    document.getElementById('btnNextRound').onclick = () => {
-      if (state.roundIndex < state.rounds.length - 1) loadRound(state.roundIndex + 1);
+    /* HANDS-FREE AUDIO BLITZ */
+    function startBlitz() {
+      if (!('speechSynthesis' in window)) { alert('Web Speech API is not supported in this browser.'); return; }
+      const pairs = DECKS[state.deckId].pairs;
+      const due = pairs.filter(p => getBox(state.deckId, p.term) < 3);
+      state.blitzQueue = shuffle(due.length ? due : pairs);
+      state.blitzIdx = 0;
+      state.blitzActive = true;
+      document.getElementById('audioBlitzPanel').classList.add('visible');
+      runBlitzStep();
+    }
+
+    function runBlitzStep() {
+      if (!state.blitzActive) return;
+      clearTimeout(state.blitzTimeout);
+      if (state.blitzIdx >= state.blitzQueue.length) state.blitzIdx = 0;
+      const item = state.blitzQueue[state.blitzIdx];
+      document.getElementById('blitzTerm').textContent = `${state.blitzIdx + 1}/${state.blitzQueue.length}: ${item.term}`;
+      document.getElementById('blitzDef').textContent = 'Thinking pause (3 seconds)...';
+
+      speak(item.term, () => {
+        if (!state.blitzActive) return;
+        state.blitzTimeout = setTimeout(() => {
+          if (!state.blitzActive) return;
+          document.getElementById('blitzDef').textContent = `${item.def} — Tip: ${item.tip}`;
+          speak(`${item.def}. ${item.tip}`, () => {
+            if (!state.blitzActive) return;
+            state.blitzIdx++;
+            state.blitzTimeout = setTimeout(runBlitzStep, 1200);
+          });
+        }, 2800);
+      });
+    }
+
+    function stopBlitz() {
+      state.blitzActive = false;
+      clearTimeout(state.blitzTimeout);
+      stopSpeech();
+      document.getElementById('audioBlitzPanel').classList.remove('visible');
+    }
+
+    /* INTERACTIVE VISUAL DECISION TREES */
+    function renderTreeTabs() {
+      const bar = document.getElementById('treeTabs');
+      bar.innerHTML = '';
+      Object.entries(DECISION_TREES).forEach(([id, tree]) => {
+        const btn = document.createElement('button');
+        btn.className = `btn ${state.treeId === id ? 'btn-primary' : ''}`;
+        btn.textContent = tree.title;
+        btn.onclick = () => {
+          state.treeId = id;
+          state.treeHistory = [tree.root];
+          renderTreeTabs();
+          renderTreeStage();
+        };
+        bar.appendChild(btn);
+      });
+    }
+
+    function renderTreeStage() {
+      const tree = DECISION_TREES[state.treeId];
+      const curId = state.treeHistory[state.treeHistory.length - 1];
+      const node = tree.nodes[curId];
+
+      const trail = document.getElementById('treeTrail');
+      trail.innerHTML = state.treeHistory.map((id, i) => {
+        const n = tree.nodes[id];
+        return `<span class="trail-chip">${n.leaf ? n.service : `Step ${i + 1}`}</span>`;
+      }).join(' &rarr; ');
+
+      const box = document.getElementById('treeNodeBox');
+      const branches = document.getElementById('treeBranches');
+
+      if (node.leaf) {
+        box.className = 'tree-node leaf';
+        box.innerHTML = `<div style="font-size:11px; text-transform:uppercase; color:var(--success-bright); font-family:var(--font-mono); margin-bottom:4px;">Recommended AWS Service</div><h2>${node.service}</h2><p>${node.desc}</p>`;
+        branches.innerHTML = '';
+        if (state.autoNarrate) speak(`${node.service}. ${node.desc}`);
+      } else {
+        box.className = 'tree-node';
+        box.innerHTML = `<h2>${node.q}</h2><p>${node.desc}</p>`;
+        branches.innerHTML = '';
+        node.branches.forEach(br => {
+          const b = document.createElement('button');
+          b.className = 'branch-btn';
+          b.innerHTML = `<strong>${br.label}</strong><span>Click to trace path &rarr;</span>`;
+          b.onclick = () => {
+            state.treeHistory.push(br.next);
+            renderTreeStage();
+          };
+          branches.appendChild(b);
+        });
+      }
+      document.getElementById('btnTreeBack').disabled = state.treeHistory.length <= 1;
+    }
+
+    /* EVENT BINDINGS */
+    document.getElementById('modeMatching').onclick = () => {
+      state.view = 'matching';
+      document.getElementById('modeMatching').classList.add('active');
+      document.getElementById('modeTrees').classList.remove('active');
+      document.getElementById('matchingView').style.display = 'block';
+      document.getElementById('treesView').classList.remove('visible');
     };
-    document.getElementById('btnRetryMissed').onclick = () => {
-      const missed = Array.from(state.missedThisDeck.values());
-      if (missed.length) selectDeck(state.deckId, missed);
+    document.getElementById('modeTrees').onclick = () => {
+      stopBlitz();
+      state.view = 'trees';
+      document.getElementById('modeTrees').classList.add('active');
+      document.getElementById('modeMatching').classList.remove('active');
+      document.getElementById('matchingView').style.display = 'none';
+      document.getElementById('treesView').classList.add('visible');
+      renderTreeTabs();
+      renderTreeStage();
     };
-    document.getElementById('btnSummaryRetryMissed').onclick = () => {
-      const missed = Array.from(state.missedThisDeck.values());
-      if (missed.length) selectDeck(state.deckId, missed);
+
+    document.getElementById('btnToggleVoice').onclick = (e) => {
+      state.autoNarrate = !state.autoNarrate;
+      e.target.textContent = `Auto-Narrate: ${state.autoNarrate ? 'ON' : 'OFF'}`;
+      e.target.classList.toggle('toggled', state.autoNarrate);
+      if (!state.autoNarrate) stopSpeech();
     };
-    document.getElementById('roundSizeSelect').onchange = (e) => {
-      state.roundSize = Number(e.target.value);
+    document.getElementById('btnStopVoice').onclick = () => { stopBlitz(); stopSpeech(); };
+    document.getElementById('btnHandsFree').onclick = () => { if (state.blitzActive) stopBlitz(); else startBlitz(); };
+    document.getElementById('btnBlitzSkip').onclick = () => { state.blitzIdx++; runBlitzStep(); };
+    document.getElementById('btnBlitzClose').onclick = stopBlitz;
+
+    document.getElementById('btnLeitnerDue').onclick = (e) => {
+      state.focusDueOnly = !state.focusDueOnly;
+      e.target.textContent = `Focus Box 1-2 Only: ${state.focusDueOnly ? 'ON' : 'OFF'}`;
+      e.target.classList.toggle('toggled', state.focusDueOnly);
+      selectDeck(state.deckId);
+    };
+    document.getElementById('btnResetLeitner').onclick = () => {
+      if (!confirm('Reset Leitner boxes for this deck back to Box 1?')) return;
+      delete state.srs[state.deckId];
+      saveSrs();
       selectDeck(state.deckId);
     };
 
-    // Keyboard shortcuts: 1-9/0 for left, A-J for right, R for reshuffle
+    document.getElementById('btnShuffle').onclick = () => selectDeck(state.deckId);
+    document.getElementById('btnNextRound').onclick = () => { if (state.roundIndex < state.rounds.length - 1) loadRound(state.roundIndex + 1); };
+    document.getElementById('btnRetryMissed').onclick = () => {
+      const m = Array.from(state.missedThisDeck.values());
+      if (m.length) selectDeck(state.deckId, m);
+    };
+    document.getElementById('btnSummaryRetryMissed').onclick = () => {
+      const m = Array.from(state.missedThisDeck.values());
+      if (m.length) selectDeck(state.deckId, m);
+    };
+    document.getElementById('roundSizeSelect').onchange = (e) => { state.roundSize = Number(e.target.value); selectDeck(state.deckId); };
+
+    document.getElementById('btnTreeBack').onclick = () => { if (state.treeHistory.length > 1) { state.treeHistory.pop(); renderTreeStage(); } };
+    document.getElementById('btnTreeReset').onclick = () => { state.treeHistory = [DECISION_TREES[state.treeId].root]; renderTreeStage(); };
+    document.getElementById('btnTreeSpeak').onclick = () => {
+      const tree = DECISION_TREES[state.treeId];
+      const node = tree.nodes[state.treeHistory[state.treeHistory.length - 1]];
+      speak(node.leaf ? `${node.service}. ${node.desc}` : `${node.q}. ${node.desc}`);
+    };
+
     document.addEventListener('keydown', (e) => {
-      if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+      if (state.view !== 'matching' || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
       const key = e.key.toUpperCase();
       if (key === 'R') { selectDeck(state.deckId); return; }
       if (/^[1-9]$/.test(key)) {
